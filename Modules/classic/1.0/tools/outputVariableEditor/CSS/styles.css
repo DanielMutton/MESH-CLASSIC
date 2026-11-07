@@ -1,0 +1,26 @@
+body {
+	background-color: #00bfff; //
+	background-image: url("../images/background1.jpg");
+	background-size: cover;
+	color: white;
+	width: 770px;
+}
+
+label {
+	display: inline-block;
+	//width: 20em;
+	text-align: right;
+}
+
+td {
+	padding: 5px;
+	text-align: center;
+}
+
+.variableTextInput {
+	width: 400px;
+}
+
+div#filter {
+	text-align: center;
+}

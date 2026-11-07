@@ -1,0 +1,7 @@
+GPP d avg csv
+NEP d avg csv
+NPP d avg csv
+Re d avg csv
+flg d avg csv
+fsg d avg csv
+EVAP d sum csv

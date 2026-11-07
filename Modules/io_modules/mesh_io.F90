@@ -1,0 +1,4101 @@
+module mesh_io
+
+    !> 'print_routines': For print routines, format statements, and line lengths and limits.
+    use print_routines
+
+    !> 'field_utilities': For I/O field types, options and routines.
+    use field_utilities
+
+    !> 'file_types': For I/O file types.
+    use file_types
+
+    implicit none
+
+    !> Local variables.
+    !*  BASE_FILE_IUNIT: Active file unit.
+    integer, private, save :: BASE_FILE_IUNIT = 1111
+
+    private check_projection, check_dimension
+
+    interface assign_cell_values
+        module procedure assign_cell_values_real
+        module procedure assign_cell_values_int
+    end interface
+
+!-    interface assign_cell_values_pntr
+!-        module procedure assign_cell_values_real_pntr
+!-        module procedure assign_cell_values_int_pntr
+!-    end interface
+
+    interface assign_tile_values
+        module procedure assign_tile_values_real
+        module procedure assign_tile_values_int
+    end interface
+
+!-    interface assign_tile_values_pntr
+!-        module procedure assign_tile_values_real_pntr
+!-        module procedure assign_tile_values_int_pntr
+!-    end interface
+
+    type(model_variable), dimension(:), allocatable :: available_output_fields
+
+    interface add_available_output_field
+        module procedure add_available_output_field_5d
+        module procedure add_available_output_field_4d
+        module procedure add_available_output_field_3d
+        module procedure add_available_output_field_2d
+        module procedure add_available_output_field_1d
+        module procedure add_available_output_field_scalar
+    end interface
+
+    contains
+
+    subroutine assign_model_variable_field_attributes( &
+        field, field_label, &
+        field_description, field_units, const_mul, const_add, no_data_value, valid_min, valid_max)
+
+        !> Input/output variables.
+        class(*) :: field
+        character(len = *), intent(in) :: field_label
+        character(len = *), intent(in), optional :: field_description
+        character(len = *), intent(in), optional :: field_units
+        class(*), intent(in), optional :: const_mul
+        class(*), intent(in), optional :: const_add
+        class(*), intent(in), optional :: no_data_value
+        class(*), intent(in), optional :: valid_min
+        class(*), intent(in), optional :: valid_max
+
+        !> Local variables.
+        integer ierr, z
+        ierr = 0
+
+        !> Assign common attributes.
+        select type (field)
+            class is (model_variable_info)
+                call copy_field(field_label, field%label, z); if (z /= 0) ierr = z
+                if (present(field_description)) call copy_field(field_description, field%description, z); if (z /= 0) ierr = z
+                if (present(field_units)) call copy_field(field_units, field%units, z); if (z /= 0) ierr = z
+        end select
+
+        !> Extended attributes.
+        select type (field)
+            class is (model_variable_real_base)
+                if (present(const_mul)) call copy_field(const_mul, field%const_mul, z); if (z /= 0) ierr = z
+                if (present(const_add)) call copy_field(const_add, field%const_add, z); if (z /= 0) ierr = z
+                if (present(no_data_value)) call copy_field(no_data_value, field%no_data_value, z); if (z /= 0) ierr = z
+                if (present(valid_max)) call copy_field(valid_max, field%valid_max, z); if (z /= 0) ierr = z
+                if (present(valid_min)) call copy_field(valid_min, field%valid_min, z); if (z /= 0) ierr = z
+            class is (model_variable_int_base)
+                if (present(no_data_value)) call copy_field(no_data_value, field%no_data_value, z); if (z /= 0) ierr = z
+                if (present(valid_max)) call copy_field(valid_max, field%valid_max, z); if (z /= 0) ierr = z
+                if (present(valid_min)) call copy_field(valid_min, field%valid_min, z); if (z /= 0) ierr = z
+            class is (model_variable_char_base)
+                if (present(no_data_value)) call copy_field(no_data_value, field%no_data_value, z); if (z /= 0) ierr = z
+        end select
+
+        !> Check for errors.
+        if (ierr /= 0) then
+            call print_error("An error occurred assigning attributes of the field '" // trim(field_label) // "'.")
+            call program_abort()
+        end if
+
+    end subroutine
+
+    subroutine expand_model_variable_list(model_variable_list)
+
+        !> Input/output variables.
+        type(model_variable), dimension(:), allocatable :: model_variable_list
+
+        !> Local variables.
+        type(model_variable), dimension(:), allocatable :: temp_list
+
+        !> Expand list.
+        if (allocated(model_variable_list)) then
+            call move_alloc(model_variable_list, temp_list)
+            allocate(model_variable_list(size(temp_list) + 1))
+            model_variable_list(1:size(temp_list)) = temp_list
+        else
+            allocate(model_variable_list(1))
+        end if
+
+    end subroutine
+
+    subroutine add_available_output_field_5d( &
+        field_names, field_pointer, dim_names, &
+        field_description, field_units, const_mul, const_add, no_data_value, valid_min, valid_max)
+
+        !> Input variables.
+        character(len = *), dimension(:), intent(in) :: field_names
+        class(*), dimension(:, :, :, :, :), intent(in), target :: field_pointer
+        character(len = *), dimension(5), intent(in) :: dim_names
+        character(len = *), intent(in), optional :: field_description
+        character(len = *), intent(in), optional :: field_units
+        class(*), intent(in), optional :: const_mul
+        class(*), intent(in), optional :: const_add
+        class(*), intent(in), optional :: no_data_value
+        class(*), intent(in), optional :: valid_min
+        class(*), intent(in), optional :: valid_max
+
+        !> Expand list.
+        call expand_model_variable_list(available_output_fields)
+
+        !> Add variables to list.
+        select type (field_pointer)
+            type is (real)
+                allocate(available_output_fields(size(available_output_fields))%field, source = &
+                    model_variable_real5d_pointer(dat = field_pointer, dim_names = dim_names))
+            type is (integer)
+                allocate(available_output_fields(size(available_output_fields))%field, source = &
+                    model_variable_int5d_pointer(dat = field_pointer, dim_names = dim_names))
+            class default
+                call print_error("Incompatible file type registering '" // trim(field_names(1)) // "' as an available output field.")
+                call program_abort()
+        end select
+
+        !> Assign attributes.
+        call assign_model_variable_field_attributes( &
+            available_output_fields(size(available_output_fields))%field, field_names(1), &
+            field_description, field_units, const_mul, const_add, no_data_value, valid_min, valid_max)
+
+    end subroutine
+
+    subroutine add_available_output_field_4d( &
+        field_names, field_pointer, dim_names, &
+        field_description, field_units, const_mul, const_add, no_data_value, valid_min, valid_max)
+
+        !> Input variables.
+        character(len = *), dimension(:), intent(in) :: field_names
+        class(*), dimension(:, :, :, :), intent(in), target :: field_pointer
+        character(len = *), dimension(4), intent(in) :: dim_names
+        character(len = *), intent(in), optional :: field_description
+        character(len = *), intent(in), optional :: field_units
+        class(*), intent(in), optional :: const_mul
+        class(*), intent(in), optional :: const_add
+        class(*), intent(in), optional :: no_data_value
+        class(*), intent(in), optional :: valid_min
+        class(*), intent(in), optional :: valid_max
+
+        !> Expand list.
+        call expand_model_variable_list(available_output_fields)
+
+        !> Add variables to list.
+        select type (field_pointer)
+            type is (real)
+                allocate(available_output_fields(size(available_output_fields))%field, source = &
+                    model_variable_real4d_pointer(dat = field_pointer, dim_names = dim_names))
+            type is (integer)
+                allocate(available_output_fields(size(available_output_fields))%field, source = &
+                    model_variable_int4d_pointer(dat = field_pointer, dim_names = dim_names))
+            class default
+                call print_error("Incompatible file type registering '" // trim(field_names(1)) // "' as an available output field.")
+                call program_abort()
+        end select
+
+        !> Assign attributes.
+        call assign_model_variable_field_attributes( &
+            available_output_fields(size(available_output_fields))%field, field_names(1), &
+            field_description, field_units, const_mul, const_add, no_data_value, valid_min, valid_max)
+
+    end subroutine
+
+    subroutine add_available_output_field_3d( &
+        field_names, field_pointer, dim_names, &
+        field_description, field_units, const_mul, const_add, no_data_value, valid_min, valid_max)
+
+        !> Input variables.
+        character(len = *), dimension(:), intent(in) :: field_names
+        class(*), dimension(:, :, :), intent(in), target :: field_pointer
+        character(len = *), dimension(3), intent(in) :: dim_names
+        character(len = *), intent(in), optional :: field_description
+        character(len = *), intent(in), optional :: field_units
+        class(*), intent(in), optional :: const_mul
+        class(*), intent(in), optional :: const_add
+        class(*), intent(in), optional :: no_data_value
+        class(*), intent(in), optional :: valid_min
+        class(*), intent(in), optional :: valid_max
+
+        !> Expand list.
+        call expand_model_variable_list(available_output_fields)
+
+        !> Add variables to list.
+        select type (field_pointer)
+            type is (real)
+                allocate(available_output_fields(size(available_output_fields))%field, source = &
+                    model_variable_real3d_pointer(dat = field_pointer, dim_names = dim_names))
+            type is (integer)
+                allocate(available_output_fields(size(available_output_fields))%field, source = &
+                    model_variable_int3d_pointer(dat = field_pointer, dim_names = dim_names))
+            class default
+                call print_error("Incompatible file type registering '" // trim(field_names(1)) // "' as an available output field.")
+                call program_abort()
+        end select
+
+        !> Assign attributes.
+        call assign_model_variable_field_attributes( &
+            available_output_fields(size(available_output_fields))%field, field_names(1), &
+            field_description, field_units, const_mul, const_add, no_data_value, valid_min, valid_max)
+
+    end subroutine
+
+    subroutine add_available_output_field_2d( &
+        field_names, field_pointer, dim_names, &
+        field_description, field_units, const_mul, const_add, no_data_value, valid_min, valid_max)
+
+        !> Input variables.
+        character(len = *), dimension(:), intent(in) :: field_names
+        class(*), dimension(:, :), intent(in), target :: field_pointer
+        character(len = *), dimension(2), intent(in) :: dim_names
+        character(len = *), intent(in), optional :: field_description
+        character(len = *), intent(in), optional :: field_units
+        class(*), intent(in), optional :: const_mul
+        class(*), intent(in), optional :: const_add
+        class(*), intent(in), optional :: no_data_value
+        class(*), intent(in), optional :: valid_min
+        class(*), intent(in), optional :: valid_max
+
+        !> Expand list.
+        call expand_model_variable_list(available_output_fields)
+
+        !> Add variables to list.
+        select type (field_pointer)
+            type is (real)
+                allocate(available_output_fields(size(available_output_fields))%field, source = &
+                    model_variable_real2d_pointer(dat = field_pointer, dim_names = dim_names))
+            type is (integer)
+                allocate(available_output_fields(size(available_output_fields))%field, source = &
+                    model_variable_int2d_pointer(dat = field_pointer, dim_names = dim_names))
+            class default
+                call print_error("Incompatible file type registering '" // trim(field_names(1)) // "' as an available output field.")
+                call program_abort()
+        end select
+
+        !> Assign attributes.
+        call assign_model_variable_field_attributes( &
+            available_output_fields(size(available_output_fields))%field, field_names(1), &
+            field_description, field_units, const_mul, const_add, no_data_value, valid_min, valid_max)
+
+    end subroutine
+
+    subroutine add_available_output_field_1d( &
+        field_names, field_pointer, dim_names, &
+        field_description, field_units, const_mul, const_add, no_data_value, valid_min, valid_max)
+
+        !> Input variables.
+        character(len = *), dimension(:), intent(in) :: field_names
+        class(*), dimension(:), intent(in), target :: field_pointer
+        character(len = *), dimension(1), intent(in) :: dim_names
+        character(len = *), intent(in), optional :: field_description
+        character(len = *), intent(in), optional :: field_units
+        class(*), intent(in), optional :: const_mul
+        class(*), intent(in), optional :: const_add
+        class(*), intent(in), optional :: no_data_value
+        class(*), intent(in), optional :: valid_min
+        class(*), intent(in), optional :: valid_max
+
+        !> Expand list.
+        call expand_model_variable_list(available_output_fields)
+
+        !> Add variables to list.
+        select type (field_pointer)
+            type is (real)
+                allocate(available_output_fields(size(available_output_fields))%field, source = &
+                    model_variable_real1d_pointer(dat = field_pointer, dim_names = dim_names))
+            type is (integer)
+                allocate(available_output_fields(size(available_output_fields))%field, source = &
+                    model_variable_int1d_pointer(dat = field_pointer, dim_names = dim_names))
+            type is (character(len = *))
+                allocate(available_output_fields(size(available_output_fields))%field, source = &
+                    model_variable_char1d_pointer(dat = field_pointer, dim_names = dim_names))
+            class default
+                call print_error("Incompatible file type registering '" // trim(field_names(1)) // "' as an available output field.")
+                call program_abort()
+        end select
+
+        !> Assign attributes.
+        call assign_model_variable_field_attributes( &
+            available_output_fields(size(available_output_fields))%field, field_names(1), &
+            field_description, field_units, const_mul, const_add, no_data_value, valid_min, valid_max)
+
+    end subroutine
+
+    subroutine add_available_output_field_scalar( &
+        field_names, field_pointer, &
+        field_description, field_units, const_mul, const_add, no_data_value, valid_min, valid_max)
+
+        !> Input variables.
+        character(len = *), dimension(:), intent(in) :: field_names
+        class(*), intent(in), target :: field_pointer
+        character(len = *), intent(in), optional :: field_description
+        character(len = *), intent(in), optional :: field_units
+        class(*), intent(in), optional :: const_mul
+        class(*), intent(in), optional :: const_add
+        class(*), intent(in), optional :: no_data_value
+        class(*), intent(in), optional :: valid_min
+        class(*), intent(in), optional :: valid_max
+
+        !> Expand list.
+        call expand_model_variable_list(available_output_fields)
+
+        !> Add variables to list.
+        select type (field_pointer)
+            type is (real)
+                allocate(available_output_fields(size(available_output_fields))%field, source = &
+                    model_variable_real_pointer(dat = field_pointer))
+            type is (integer)
+                allocate(available_output_fields(size(available_output_fields))%field, source = &
+                    model_variable_int_pointer(dat = field_pointer))
+            type is (character(len = *))
+                allocate(available_output_fields(size(available_output_fields))%field, source = &
+                    model_variable_char_pointer(dat = field_pointer))
+            class default
+                call print_error("Incompatible file type registering '" // trim(field_names(1)) // "' as an available output field.")
+                call program_abort()
+        end select
+
+        !> Assign attributes.
+        call assign_model_variable_field_attributes( &
+            available_output_fields(size(available_output_fields))%field, field_names(1), &
+            field_description, field_units, const_mul, const_add, no_data_value, valid_min, valid_max)
+
+    end subroutine
+
+    subroutine check_projection(reference_projection, file_projection, quiet, error_status)
+
+        !> Parsing utilities.
+        use strings, only: lowercase
+
+        !> Input/output variables.
+        character(len = *), intent(in) :: reference_projection, file_projection
+        logical, intent(in), optional :: quiet
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        integer ierr
+        logical v
+
+        !> Check verbosity (override if 'DIAGNOSEMODE' is enabled).
+        v = .true.
+        if (present(quiet)) v = .not. quiet
+        if (DIAGNOSEMODE) v = .true.
+
+        !> Check projection (from file to reference).
+        ierr = 0
+        if (lowercase(file_projection) /= lowercase(reference_projection)) then
+            if (v) call print_error( &
+                "The projection of the file '" // trim(file_projection) // "' does not match the '" // &
+                trim(reference_projection) // "' projection for the active domain.")
+            ierr = 1
+        else
+            if (v) call print_info("The projection of the file is '" // trim(file_projection) // "'.")
+        end if
+
+        !> Return status.
+        error_status = ierr
+
+    end subroutine
+
+    subroutine check_dimension( &
+        file_label, reference_label, file_values, reference_values, file_units, reference_units, null_value, quiet, error_status)
+
+        !> Parsing utilities.
+        use strings, only: lowercase
+
+        !> Input/output variables.
+        character(len = *), intent(in) :: file_label
+        character(len = *), intent(in) :: reference_label
+        real, dimension(:), intent(in) :: file_values
+        real, dimension(:), intent(in) :: reference_values
+        character(len = *), intent(in), optional :: file_units
+        character(len = *), dimension(:), intent(in), optional :: reference_units
+        real, intent(in), optional :: null_value
+        logical, intent(in), optional :: quiet
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        character(len = SHORT_FIELD_LENGTH) code1, code2
+        integer i, ierr
+        logical v, ltest
+
+        !> Check verbosity (override if 'DIAGNOSEMODE' is enabled).
+        v = .true.
+        if (present(quiet)) v = .not. quiet
+        if (DIAGNOSEMODE) v = .true.
+
+        !> Check units (if present).
+        ierr = 0
+        if (present(file_units) .and. present(reference_units)) then
+            ltest = .false.
+            i = 1
+            do while (.not. ltest .and. i <= size(reference_units))
+                ltest = (lowercase(file_units) == lowercase(reference_units(i)))
+                i = i + 1
+            end do
+            if (.not. ltest) then
+                if (v) call print_warning( &
+                    "The " // trim(reference_label) // " reference '" // trim(file_label) // &
+                    "' contains unrecognized or unsupported units '" // trim(file_units) // "'.")
+            end if
+        end if
+
+        !> Check dimension size.
+        ltest = (size(file_values) == size(reference_values))
+        if (.not. ltest) then
+            if (v) then
+                write(code1, *) size(file_values)
+                write(code2, *) size(reference_values)
+                call print_error( &
+                    "The number of values does not match between the file (" // trim(adjustl(code1)) // ") and active domain (" // &
+                    trim(adjustl(code2)) // ") for the " // trim(reference_label) // " reference.")
+            end if
+            ierr = 1
+        end if
+
+        !> Check values.
+        if (ierr == 0) then
+
+            !> Compare values.
+            ltest = .true.
+            do i = 1, size(reference_values)
+                ltest = (ltest .and. (reference_values(i) == file_values(i)))
+            end do
+            if (.not. ltest) then
+                if (v) call print_error( &
+                    "The values do not match between the file and active domain for the  " // trim(reference_label) // &
+                    " reference.")
+                ierr = 1
+            end if
+
+            !> Check for missing values.
+            if (present(null_value)) then
+                if (any(file_values == null_value)) then
+                    if (v) call print_error("The " // trim(reference_label) // " reference contains missing values.")
+                    ierr = 1
+                end if
+            end if
+        end if
+
+        !> Return status.
+        error_status = ierr
+
+    end subroutine
+
+    subroutine validate_input_file_spatial_reference(input_file, quiet, error_status)
+
+        !> Variables.
+        use projection_variables, only: pj
+
+        !> I/O modules.
+        use ensim_io
+#ifdef NETCDF
+        use nc_io
+#endif
+
+        !> Input/output variables.
+        !*  input_file: Input file object ('io_file').
+        !*  quiet: .true. to suppress block formatting (optional, default: .false.).
+        !*  error_status: Status returned by the operation (optional; 0: normal).
+        type(io_file), intent(in) :: input_file
+        logical, intent(in), optional :: quiet
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        integer ierr
+        logical v
+
+        !> File utility variables.
+        type(ensim_keyword), dimension(:), allocatable :: vkeyword
+        integer nkeyword
+#ifdef NETCDF
+        character(len = SHORT_FIELD_LENGTH) :: projection, units, field
+        real, allocatable :: dat_r(:)
+        real fill_r
+        integer, allocatable :: dimids(:)
+        integer i, dim_length, ndims, nvars
+#endif
+
+        !> Error status.
+        if (.not. allocated(input_file%container)) then
+            error_status = 1
+        else
+            error_status = 0
+        end if
+
+        !> Check verbosity (override if 'DIAGNOSEMODE' is enabled).
+        v = .true.
+        if (present(quiet)) v = .not. quiet
+        if (DIAGNOSEMODE) v = .true.
+
+        !> Validate the spatial reference of the file (compared to 'pj').
+        ierr = 0
+        select type (file_type => input_file%container)
+
+            !> r2c ASCII format.
+            type is (io_type_r2c)
+
+                !> Rewind the file.
+                rewind(input_file%iunit)
+
+                !> Read the header in the file.
+                if (v) call print_message("Reading header information.")
+                call parse_header_ensim(input_file%iunit, vkeyword, nkeyword, ierr)
+                if (ierr /= 0) then
+
+                    !> Check the spatial reference matches 'pj'.
+                    if (v) call print_message("Checking the spatial reference of the file.")
+                    call validate_header_spatial( &
+                        vkeyword, nkeyword, &
+                        pj%projection, size(pj%lon), pj%dx, pj%llc_x, size(pj%lat), pj%dy, pj%llc_y, &
+                        ierr)
+                    error_status = 1
+                end if
+#ifdef NETCDF
+
+            !> NetCDF format.
+            type is (io_type_nc)
+
+                !> Read the projection from the file.
+                if (v) call print_message("Checking the spatial reference of the file.")
+                call nc4_get_projection(input_file%iunit, projection, ierr = ierr)
+                if (ierr == 0) then
+
+                    !> Check if the projection matches 'pj'.
+                    call check_projection(projection, pj%projection, quiet = .not. v, error_status = ierr)
+
+                    !> Get the number of variables in the file.
+                    call nc4_inquire_file(input_file%iunit, nvars = nvars, ierr = ierr)
+                    if (ierr == 0) then
+
+                        !> Scan the variables for latitudes/longitudes.
+                        do i = 1, nvars
+
+                            !> Get the name of the variable.
+                            call nc4_get_variable_name(input_file%iunit, i, field, ierr)
+                            if (ierr /= 0) cycle
+
+                            !> Get information about the dimensions.
+                            call nc4_get_variable_attributes( &
+                                input_file%iunit, field, units = units, ndims = ndims, dimids = dimids, ierr = ierr)
+
+                            !> Cycle if a multi-dimension field.
+                            if (ndims /= 1) cycle
+
+                            !> Get the dimension length.
+                            call nc4_get_dimension_name(input_file%iunit, dimids(1), dim_length = dim_length, ierr = ierr)
+                            if (ierr /= 0) then
+                                cycle
+                            else
+
+                                !> Allocate the temporary data array.
+                                allocate(dat_r(dim_length))
+                            end if
+
+                            !> Check values.
+                            select case (uppercase(field))
+                                case (DIM_NAME_LAT, DIM_NAME_LATITUDE, DIM_NAME_DEGLAT)
+                                    call nc4_get_data(input_file%iunit, field, vid = i, dat = dat_r, ierr = ierr)
+                                    if (ierr == 0) then
+                                        call check_dimension( &
+                                            field, 'latitudinal', dat_r, pj%lat, units, &
+                                            (/DIM_UNITS_DEGREES, DIM_UNITS_DECIMAL_DEGREES, DIM_UNITS_DEGREES_NORTH/), fill_r, &
+                                            quiet = .not. v, error_status = ierr)
+                                        if (ierr /= 0) error_status = 1
+                                    end if
+                                case (DIM_NAME_RLAT)
+                                    call nc4_get_data(input_file%iunit, field, vid = i, dat = dat_r, ierr = ierr)
+                                    if (ierr == 0) then
+                                        call check_dimension( &
+                                            field, 'rotated-latitudinal', dat_r, pj%lat, units, &
+                                            (/DIM_UNITS_DEGREES, DIM_UNITS_DECIMAL_DEGREES, DIM_UNITS_DEGREES_NORTH/), fill_r, &
+                                            quiet = .not. v, error_status = ierr)
+                                        if (ierr /= 0) error_status = 1
+                                    end if
+                                case (DIM_NAME_LON, DIM_NAME_LONGITUDE, DIM_NAME_DEGLON)
+                                    call nc4_get_data(input_file%iunit, field, vid = i, dat = dat_r, ierr = ierr)
+                                    if (ierr == 0) then
+                                        call check_dimension( &
+                                            field, 'longitudinal', dat_r, pj%lon, units, &
+                                            (/DIM_UNITS_DEGREES, DIM_UNITS_DECIMAL_DEGREES, DIM_UNITS_DEGREES_EAST/), fill_r, &
+                                            quiet = .not. v, error_status = ierr)
+                                        if (ierr /= 0) error_status = 1
+                                    end if
+                                case (DIM_NAME_RLON)
+                                    call nc4_get_data(input_file%iunit, field, vid = i, dat = dat_r, ierr = ierr)
+                                    if (ierr == 0) then
+                                        call check_dimension( &
+                                            field, 'rotated-longitudinal', dat_r, pj%lon, units, &
+                                            (/DIM_UNITS_DEGREES, DIM_UNITS_DECIMAL_DEGREES, DIM_UNITS_DEGREES_EAST/), fill_r, &
+                                            quiet = .not. v, error_status = ierr)
+                                        if (ierr /= 0) error_status = 1
+                                    end if
+                            end select
+
+                            !> Clean-up.
+                            if (allocated(dat_r)) deallocate(dat_r)
+                        end do
+                    end if
+                end if
+#endif
+        end select
+
+    end subroutine
+
+    subroutine open_input_file(input_file, quiet, error_status)
+
+        !> I/O modules.
+        use ensim_io
+        use txt_io
+#ifdef NETCDF
+        use nc_io
+#endif
+
+        !> Input/output variables.
+        !*  input_file: Input file object ('io_file').
+        !*  quiet: .true. to suppress block formatting (optional, default: .false.).
+        !*  error_status: Status returned by the operation (optional; 0: normal).
+        type(io_file) input_file
+        logical, intent(in), optional :: quiet
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        character(len = SHORT_FIELD_LENGTH) code
+        integer iun, ierr
+        logical v
+
+        !> Check verbosity (override if 'DIAGNOSEMODE' is enabled).
+        v = .true.
+        if (present(quiet)) v = .not. quiet
+        if (DIAGNOSEMODE) v = .true.
+
+        !> Check for a valid path.
+        if (len_trim(input_file%full_path) == 0 .or. .not. allocated(input_file%container)) then
+            if (v) call print_error("Unable to open a file with no file name or no associated format.")
+            error_status = 1
+            return
+        else
+
+            !> Print a message (if not quiet).
+            error_status = 0
+            if (v) then
+                call reset_tab()
+                call print_message("READING: " // trim(input_file%full_path))
+                call increase_tab()
+            end if
+        end if
+
+        !> Open the file with read access.
+        ierr = 0
+        select type (file_type => input_file%container)
+
+            !> r2c ASCII format.
+            type is (io_type_r2c)
+                call open_ensim_input(BASE_FILE_IUNIT, input_file%full_path, ierr)
+                if (ierr == 0) then
+                    input_file%iunit = BASE_FILE_IUNIT
+                    BASE_FILE_IUNIT = BASE_FILE_IUNIT + 1
+                end if
+
+            !> Simple text formats (txt, asc, CSV).
+            type is (io_type_char_delimited)
+                open(BASE_FILE_IUNIT, file = input_file%full_path, action = 'read', status = 'old', iostat = ierr)
+                if (ierr == 0) then
+                    input_file%iunit = BASE_FILE_IUNIT
+                    BASE_FILE_IUNIT = BASE_FILE_IUNIT + 1
+                end if
+
+            !> Binary sequential format (seq).
+            type is (io_type_seq)
+                open( &
+                    BASE_FILE_IUNIT, file = input_file%full_path, action = 'read', status = 'old', form = 'unformatted', &
+                    access = 'sequential', iostat = ierr)
+                if (ierr == 0) then
+                    input_file%iunit = BASE_FILE_IUNIT
+                    BASE_FILE_IUNIT = BASE_FILE_IUNIT + 1
+                end if
+
+            !> NetCDF format.
+            type is (io_type_nc)
+#ifdef NETCDF
+                call nc4_open_input(input_file%full_path, .true., iun, ierr)
+                if (ierr == 0) then
+                    input_file%iunit = iun
+                end if
+#else
+                if (.not. v) call print_error("Unable to open file '" // trim(input_file%full_path) // "'.")
+                call print_error( &
+                    "A file file in NetCDF format is specified for '" // trim(input_file%full_path) // &
+                    "' but the NetCDF module is not active. " // &
+                    "A version of MESH compiled with the NetCDF library must be used to read files in input_file format.")
+                ierr = 1
+#endif
+
+            !> CLASS MET format.
+            type is (io_type_met)
+                open(BASE_FILE_IUNIT, file = input_file%full_path, action = 'read', status = 'old', iostat = ierr)
+                if (ierr == 0) then
+                    input_file%iunit = BASE_FILE_IUNIT
+                    BASE_FILE_IUNIT = BASE_FILE_IUNIT + 1
+                end if
+
+            !> Virtual file.
+            type is (io_type_virtual)
+
+            !> Unknown file format.
+            class default
+                if (v) call print_error("Unknown or unsupported file format.")
+                ierr = 1
+        end select
+
+        !> Check for I/O error.
+        if (ierr /= 0) then
+            write(code, *) ierr
+            if (v) call print_error("An error occurred opening the file (Code: " // trim(adjustl(code)) // ").")
+            error_status = ierr
+        end if
+
+    end subroutine
+
+    subroutine read_file_fields_to_buffer(input_file, quiet, error_status)
+
+        !> Parsing utilities.
+!-        use strings, only: uppercase, lowercase
+        use date_utilities, only: jday_to_date
+
+        !> Variables.
+        use variable_names
+        use model_variables, only: vs
+
+        !> I/O modules.
+        use ensim_io
+        use txt_io
+#ifdef NETCDF
+        use nc_io
+#endif
+
+        !> Input/output variables.
+        !*  input_file: Input file object ('io_file').
+        !*  quiet: .true. to suppress block formatting (optional, default: .false.).
+        !*  error_status: Status returned by the operation (optional; 0: normal).
+        type(io_file) input_file
+        logical, intent(in), optional :: quiet
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        type(io_field), dimension(:), allocatable :: file_buffer
+        character(len = SHORT_FIELD_LENGTH) :: code
+        integer, dimension(:), allocatable :: dim_lengths
+        integer n, j, i, natts, nvars, nplus, ierr
+        logical v
+
+        !> File utility variables.
+        type(ensim_keyword), dimension(:), allocatable :: vkeyword
+        type(ensim_attr), dimension(:), allocatable :: vattr
+        real(kind = 4), allocatable :: dat1_rk4(:)
+        real, allocatable :: dat3_r(:, :, :), dat1_r(:)
+        integer(kind = 4), allocatable :: dat1_ik4(:)
+        integer, allocatable :: dat1_i(:)
+        integer x, y, iattr, nattrs, class_count
+        character(len = SHORT_FIELD_LENGTH), dimension(:), allocatable :: dim_names, args
+        character(len = SHORT_FIELD_LENGTH) :: vname_append, dname
+        character(len = DEFAULT_LINE_LENGTH) line_buffer
+        character(len = :), allocatable :: message
+#ifdef NETCDF
+        character(len = SHORT_FIELD_LENGTH) :: description, units, aname, vname
+        character(len = :), allocatable :: dat1_c(:), dat_c
+        character fill_c
+        real(kind = kind(0.0d0)), allocatable :: dat1_d(:)
+        real, allocatable :: dat5_r(:, :, :, :, :), dat4_r(:, :, :, :), dat2_r(:, :)
+        real const_mul_r, const_add_r, valid_max_r, valid_min_r, dat_r, fill_r
+        integer, dimension(:), allocatable :: dimids, mapped_dim_order
+        integer, allocatable :: dat2_i(:, :), dat3_i(:, :, :), dat4_i(:, :, :, :), dat5_i(:, :, :, :, :)
+        integer dtype, time_order, level_order, atype, alength, ndims, valid_max_i, valid_min_i, dat_i, fill_i
+#endif
+
+        !> Error status.
+        if (.not. allocated(input_file%container)) then
+            error_status = 1
+        else
+            error_status = 0
+        end if
+
+        !> Check verbosity (override if 'DIAGNOSEMODE' is enabled).
+        v = .true.
+        if (present(quiet)) v = .not. quiet
+        if (DIAGNOSEMODE) v = .true.
+
+        !> Counters used in saving variables and for the summary.
+        natts = -1
+        nvars = -1
+
+        !> Counter adjustment for special cases.
+        nplus = 0
+
+        !> Read data in the file.
+        if (allocated(input_file%fields)) then
+            n = size(input_file%fields) + 1
+        else
+            n = 1
+        end if
+        ierr = 0
+        select type (file_type => input_file%container)
+
+            !> r2c ASCII format.
+            type is (io_type_r2c)
+
+                !> Rewind the file.
+                rewind(input_file%iunit)
+
+                !> Read the header.
+                call parse_header_ensim(input_file%iunit, vkeyword, nattrs, ierr)
+
+                !> Get a list of attributes and variables in the file.
+                if (ierr == 0) call parse_header_attribute_ensim(input_file%iunit, vkeyword, nattrs, vattr, nvars, ierr)
+
+                !> Determine type of file.
+                input_file%series%multi_frame = is_multi_frame(input_file%iunit)
+
+                !> Read and save the attributes and variables to the list of fields.
+                if (ierr == 0) then
+
+                    !> Allocate the working list of fields.
+                    allocate(file_buffer(nvars + nattrs))
+
+                    !> Loop through the attributes.
+                    class_count = 0
+                    do i = 1, nattrs
+
+                        !> Skip 'attributename', 'attributetype' and 'attributeunits'.
+                        select case (lowercase(vkeyword(i)%keyword(2:)))
+                            case ('attributename', 'attributetype', 'attributeunits')
+                            case default
+
+                                !> Save the field (omit the leading ':' from the name).
+                                line_buffer = ''
+                                if (allocated(vkeyword(i)%words)) then
+                                    do j = 1, size(vkeyword(i)%words)
+                                        line_buffer = trim(line_buffer) // trim(vkeyword(i)%words(j))
+                                    end do
+                                end if
+                                file_buffer(n)%label = trim(vkeyword(i)%keyword(2:))
+                                file_buffer(n)%id = i
+                                allocate(file_buffer(n)%field, source = model_variable_char(dat = trim(line_buffer)))
+                                n = n + 1
+
+                                !> Special cases.
+                                if (lowercase(vkeyword(i)%keyword(2:)) == 'classcount' .and. allocated(vkeyword(i)%words)) then
+
+                                    !> Number of GRUs (land cover).
+                                    read(vkeyword(i)%words(1), *, iostat = ierr) class_count
+                                    if (ierr /= 0) class_count = 0
+                                else if (lowercase(vkeyword(i)%keyword(2:)) == 'xcount' .and. allocated(vkeyword(i)%words)) then
+
+                                    !> Number of cells in the 'x' dimension.
+                                    read(vkeyword(i)%words(1), *, iostat = ierr) x
+                                    if (ierr /= 0) x = 0
+                                else if (lowercase(vkeyword(i)%keyword(2:)) == 'ycount' .and. allocated(vkeyword(i)%words)) then
+
+                                    !> Number of cells in the 'y' dimension.
+                                    read(vkeyword(i)%words(1), *, iostat = ierr) y
+                                    if (ierr /= 0) y = 0
+                                end if
+                        end select
+                    end do
+                    if (nvars == 0) then
+                        call print_error("No variables were found in the file.")
+                        error_status = 1
+                        return
+                    else if (x == 0 .or. y == 0) then
+                        call print_error("The 'x' and 'y' dimensions ('xCount' and 'yCount') were not found in the file.")
+                        error_status = 1
+                        return
+                    end if
+
+                    !> Advance past the end of the header.
+                    if (ierr == 0) call advance_past_header(input_file%iunit, input_file%full_path, ierr)
+
+                    !> Load data.
+                    if (.not. input_file%series%multi_frame) then
+
+                        !> Read and parse the variable data.
+                        if (ierr == 0) call load_data_r2c(input_file%iunit, input_file%full_path, vattr, nvars, x, y, .false., ierr)
+
+                        !> Set the dimension names.
+                        allocate(dim_names(2))
+                        dim_names = (/DIM_NAME_X, DIM_NAME_Y/)
+
+                        !> Special cases.
+                        if (class_count > 0) then
+
+                            !> GRUs.
+                            do i = (nvars - class_count + 1), nvars
+
+                                !> Register the field (assuming 'attributetype' from known variable).
+                                write(code, *) (i - (nvars - class_count))
+                                file_buffer(n)%label = trim(DIM_NAME_GRU) // ' ' // trim(adjustl(code))
+                                file_buffer(n)%id = i
+                                file_buffer(n)%meta%label = trim(vattr(i)%attr)
+                                file_buffer(n)%meta%units = trim(vattr(i)%units)
+                                allocate(file_buffer(n)%field, source = model_variable_real2d(dat = vattr(i)%val))
+                                allocate(file_buffer(n)%dim_names(size(dim_names)), source = dim_names)
+                                n = n + 1
+                            end do
+                        end if
+
+                        !> Loop through the variables.
+                        do i = 1, (nvars - class_count)
+
+                            !> Save the field.
+                            select case (vattr(i)%type)
+                                case ('integer')
+                                    allocate(file_buffer(n)%field, source = model_variable_int2d(dat = int(vattr(i)%val)))
+                                case ('float', '')
+                                    allocate(file_buffer(n)%field, source = model_variable_real2d(dat = vattr(i)%val))
+                                case default
+                                    if (v) call print_warning( &
+                                        "The variable '" // trim(vattr(i)%attr) // "' is an unknown or unsupported data " // &
+                                        "format '" // trim(vattr(i)%type) // "'.")
+                            end select
+                            if (allocated(file_buffer(n)%field)) then
+                                file_buffer(n)%label = trim(vattr(i)%attr)
+                                file_buffer(n)%id = i
+                                file_buffer(n)%meta%label = trim(vattr(i)%attr)
+                                file_buffer(n)%meta%units = trim(vattr(i)%units)
+                                allocate(file_buffer(n)%dim_names(size(dim_names)), source = dim_names)
+                                n = n + 1
+                            end if
+                        end do
+
+                        !> Invalidate the current position in the file.
+                        input_file%series%ipos = -1
+
+                        !> Close the file.
+                        close(input_file%iunit)
+                    else if (nvars /= 1) then
+
+                        !> Print an error if the multi-frame file does not contain one variable.
+                        write(code, *) nvars
+                        call print_error( &
+                            "The multi-frame file contains " // trim(adjustl(code)) // " variables when it should contain one.")
+                        error_status = 1
+                        return
+                    else
+
+                        !> Set the dimension names.
+                        allocate(dim_names(3))
+                        dim_names = (/DIM_NAME_X, DIM_NAME_Y, DIM_NAME_T/)
+
+                        !> Save meta-information and register the field.
+                        i = 1
+                        select case (vattr(i)%type)
+                            case ('float', '')
+                                allocate(dat3_r(x, y, input_file%series%block_interval))
+                                dat3_r = huge(dat3_r)
+                                file_buffer(n)%mapping%time_order = 3
+                                allocate(file_buffer(n)%field, source = model_variable_real3d(dat = dat3_r))
+                                deallocate(dat3_r)
+                            case default
+                                if (v) call print_warning( &
+                                    "The variable '" // trim(vattr(i)%attr) // "' is an unsupported data format '" // &
+                                    trim(vattr(i)%type) // "' for multi-frame files.")
+                        end select
+                        if (allocated(file_buffer(n)%field)) then
+                            if (allocated(input_file%field_map)) then
+
+                                !> Special condition: Override the source name in the field map with the one read from file.
+                                input_file%field_map(1, 1) = trim(vattr(i)%attr)
+                            end if
+                            file_buffer(n)%label = trim(vattr(i)%attr)
+                            file_buffer(n)%id = i
+                            file_buffer(n)%meta%label = trim(vattr(i)%attr)
+                            file_buffer(n)%meta%units = trim(vattr(i)%units)
+                            allocate(file_buffer(n)%dim_names(size(dim_names)), source = dim_names)
+                            n = n + 1
+                        end if
+
+                        !> Set the current position in the file.
+                        input_file%series%ipos = 1
+                    end if
+
+                    !> Adjust the number of attributes in the file.
+                    natts = nattrs - nvars
+                end if
+
+            !> Simple text formats (txt, asc, CSV).
+            type is (io_type_char_delimited)
+
+                !> Rewind the file.
+                rewind(input_file%iunit)
+
+                !> Skip leading lines.
+                do i = 1, file_type%n_skip_rows
+                    call read_txt_line(input_file%iunit, ierr = ierr)
+                    if (ierr /= 0) then
+                        error_status = 1
+                        return
+                    end if
+                end do
+
+                !> Check if a multi-frame file.
+                if (input_file%series%multi_frame) then
+
+                    !> Set the number of active variables based on existing field definitions in the file.
+                    if (allocated(input_file%fields)) n = size(input_file%fields)
+
+                    !> Print an error if the file contains more than one field.
+                    if (n /= 1) then
+                        write(code, *) n
+                        call print_error( &
+                            "A time-series in this file format must contain one field while the file contains (" // &
+                            trim(adjustl(code)) // ") fields.")
+                        error_status = 1
+                        return
+                    else
+                        n = n + 1
+                    end if
+
+                    !> Set the current position in the file and return.
+                    input_file%series%ipos = 1
+                else if (.not. allocated(input_file%fields)) then
+
+                    !> Count the number of lines in the file.
+                    call count_txt_lines(input_file%iunit, nvars, ierr)
+                    if (ierr /= 0) then
+                        error_status = 1
+                        return
+                    end if
+
+                    !> Allocate the working list of fields.
+                    allocate(file_buffer(nvars))
+
+                    !> Rewind the file.
+                    rewind(input_file%iunit)
+
+                    !> Skip leading lines.
+                    do i = 1, file_type%n_skip_rows
+                        call read_txt_line(input_file%iunit, ierr = ierr)
+                        if (ierr /= 0) cycle
+                    end do
+
+                    !> Allocate 'dim_names'.
+                    if (allocated(input_file%overrides%dim_names)) then
+                        allocate(dim_names(size(input_file%overrides%dim_names)))
+                        dim_names = input_file%overrides%dim_names
+                    else
+                        allocate(dim_names(1))
+                        dim_names(1) = DIM_NAME_NUL
+                    end if
+
+                    !> For specials keys and options.
+                    vname_append = ''
+                    dname = dim_names(1)
+
+                    !> Loop through the records.
+                    do i = 1, nvars
+
+                        !> Read the line.
+                        call read_txt_line(input_file%iunit, args, file_type%delimiter, ierr = ierr)
+                        if (ierr /= 0) cycle
+
+                        !> Cycle if no argments exist.
+                        if (size(args) < 1) cycle
+
+                        !> Cycle if the first argument does not start with a string character.
+                        if (.not. is_letter(args(1)(1:1))) cycle
+
+                        !> Special cases.
+                        select case (uppercase(args(1)))
+
+                            !> Special keys and options.
+                            case ('VNAME_APPEND')
+                                vname_append = uppercase(args(2))
+                                call print_info("Appending '" // trim(vname_append) // "' to the next set of variable names.")
+                                cycle
+                            case ('RESET_VNAME_APPEND')
+                                vname_append = ''
+                                call print_info("Removing modifiers for the next set of variable names.")
+                                cycle
+                            case ('DIM_NAME')
+                                dname = uppercase(args(2))
+                                call print_info("Setting '" // trim(dname) // "' as the dimension for the next set of variables.")
+                                cycle
+                            case ('RESET_DIM_NAME', 'RESET_DIM_NAMES')
+                                dname = DIM_NAME_NUL
+                                call print_info("Resetting the default dimension for the next set of variables.")
+                                cycle
+                            case ('RESET_KEYS', 'RESET_ALL_KEYS')
+                                vname_append = ''
+                                dname = DIM_NAME_NUL
+                                call print_info("Resetting all special keys.")
+                                cycle
+
+                            !> GRUs.
+                            case (DIM_NAME_GRU)
+                                file_buffer(n)%label = trim(DIM_NAME_GRU) // ' ' // trim(args(2))
+                                file_buffer(n)%id = i
+                                allocate(file_buffer(n)%field, source = model_variable_char1d(dat = args(3:)))
+                                allocate(file_buffer(n)%dim_names(size(dim_names)), source = dim_names)
+                                n = n + 1
+                                cycle
+                        end select
+
+                        !> Assume all fields should have values (cycle if none exist).
+                        if (size(args) > 1) then
+
+                            !> Starting index of values in 'args'.
+                            iattr = 2
+                        else
+                            cycle
+                        end if
+
+                        !> Special cases for levels.
+!                        if (any(DIM_NAMES_OF_L == dim_names(1))) then
+
+                            !> Expand variable list.
+!                            call expand_field_list(file_buffer, (size(args) - 1), ierr)
+
+                            !> Assign the last level as the background field.
+!                            write(code, *) (size(args))
+!                            call print_remark( &
+!                                "Identifying the last level '" // trim(args(1)) // "(" // trim(adjustl(code)) // &
+!                                ")' as the background field '" // trim(args(1)) // &
+!                                "' in case more levels exist in the model than in the field.")
+!                            file_buffer(n)%label = trim(args(1))
+!                            file_buffer(n)%id = i
+!                            allocate(file_buffer(n)%field, source = model_variable_char(dat = args(size(args))))
+!                            n = n + 1
+
+                            !> Add a variable for each other level.
+!                            do j = 2, (size(args) - 1)
+
+                                !> Assign the fields in reverse order to assign the last as the background field.
+!                                write(code, *) (j - 1)
+!                                file_buffer(n)%label = trim(args(1)) // ' ' // trim(adjustl(code))
+!                                file_buffer(n)%id = i
+!                                allocate(file_buffer(n)%field, source = model_variable_char(dat = args(j)))
+!                                n = n + 1
+!                            end do
+
+                            !> Cycle to skip assigning the variable itself.
+!                            cycle
+!                        else
+                        if (lowercase(args(2)(1:9)) == 'dim_name=') then
+                            dname = uppercase(args(2)(10:))
+
+                            !> Update the starting index to skip the special key.
+                            iattr = 3
+                        end if
+
+                        !> Checks for valid dimension names.
+                        if (len_trim(dname) > 0) then
+                            if (any(DIM_NAMES_OF_N == dname) .or. any(DIM_NAMES_OF_B == dname) .or. &
+                                any(DIM_NAMES_OF_G == dname)) then
+                                call print_warning( &
+                                    "Cannot use the '" // trim(dname) // "' dimension to map '" // &
+                                    trim(args(1)) // "' from this format of file.")
+                                dname = DIM_NAME_NUL
+                            else if (.not. (any(DIM_NAMES_OF_M == dname) .or. any(DIM_NAMES_OF_K == dname) .or. &
+                                any(DIM_NAMES_OF_L == dname))) then
+                                call print_warning( &
+                                    "Unknown or unsupported dimension '" // trim(dname) // &
+                                    "' specified for '" // trim(args(1)) // "'.")
+                                dname = DIM_NAME_NUL
+                            end if
+                        end if
+
+                        !> Assign the dimension name.
+                        dim_names(1) = dname
+
+                        !> Save the field.
+                        if (size(args) > iattr) then
+                            allocate(file_buffer(n)%field, source = model_variable_char1d(dat = args(iattr:)))
+                        else
+                            allocate(file_buffer(n)%field, source = model_variable_char(dat = trim(args(iattr))))
+                        end if
+                        file_buffer(n)%label = trim(args(1))
+                        if (len_trim(vname_append) > 0) then
+                            file_buffer(n)%label = trim(file_buffer(n)%label) // ' ' // trim(vname_append)
+                        end if
+                        file_buffer(n)%id = i
+                        allocate(file_buffer(n)%dim_names(size(dim_names)), source = dim_names)
+                        n = n + 1
+                    end do
+
+                    !> Close the file.
+                    close(input_file%iunit)
+                end if
+
+            !> Binary sequential format (seq).
+            type is (io_type_seq)
+
+                !> Check if a multi-frame file.
+                if (input_file%series%multi_frame) then
+
+                    !> Set the number of active variables based on existing field definitions in the file.
+                    if (allocated(input_file%fields)) n = size(input_file%fields)
+
+                    !> Print an error if the file contains more than one field.
+                    if (n /= 1) then
+                        write(code, *) n
+                        call print_error( &
+                            "A time-series in this file format must contain one field while the file contains (" // &
+                            trim(adjustl(code)) // ") fields.")
+                        error_status = 1
+                        return
+                    else
+                        n = n + 1
+                    end if
+
+                    !> Set the current position in the file and return.
+                    input_file%series%ipos = 1
+                else if (allocated(input_file%fields)) then
+
+                    !> File contains field definitions.
+                    n = 1
+                    do i = 1, size(input_file%fields)
+                        associate(input_field => input_file%fields(i))
+                            if (len_trim(input_field%label) > 0) then
+
+                                !> Valid field.
+                                if (allocated(input_field%dim_names)) then
+
+                                    !> Derive dimensional information from the dimension names.
+                                    select case (size(input_field%dim_names))
+                                        case (5)
+                                            allocate(dim_lengths(5))
+                                        case (4)
+                                            allocate(dim_lengths(4))
+                                        case (3)
+                                            allocate(dim_lengths(3))
+                                        case (2)
+                                            allocate(dim_lengths(2))
+                                        case (1)
+                                            allocate(dim_lengths(1))
+                                        case default
+                                            write(code, *) size(input_field%dim_names)
+                                            call print_error( &
+                                                "The variable '" // trim(input_field%label) // &
+                                                "' is defined with an unsupported number of dimensions (" // &
+                                                trim(adjustl(code)) // ").")
+                                            error_status = 1
+                                            exit
+                                    end select
+
+                                    !> Try to map the dimension names.
+                                    dim_lengths = 0
+                                    do j = 1, size(input_field%dim_names)
+                                        if (any(DIM_NAMES_OF_N == input_field%dim_names(j))) then
+                                            dim_lengths(j) = vs%cell_count
+                                        else if (any(DIM_NAMES_OF_M == input_field%dim_names(j))) then
+                                            dim_lengths(j) = vs%gru_count
+                                        else if (any(DIM_NAMES_OF_K == input_field%dim_names(j))) then
+                                            dim_lengths(j) = vs%riverclass_count
+                                        else if (any(DIM_NAMES_OF_G == input_field%dim_names(j))) then
+                                            dim_lengths(j) = vs%landtile_count
+                                        else if (any(DIM_NAMES_OF_SOL == input_field%dim_names(j))) then
+                                            dim_lengths(j) = vs%sol_count
+                                        else if (any(DIM_NAMES_OF_SUBTYPE == input_field%dim_names(j))) then
+                                            dim_lengths(j) = 4
+                                        else if (DIM_NAME_ICAN == input_field%dim_names(j)) then
+                                            dim_lengths(j) = 4
+                                        else if (DIM_NAME_ICP1 == input_field%dim_names(j)) then
+                                            dim_lengths(j) = 5
+                                        else if (any(DIM_NAMES_OF_VF == input_field%dim_names(j))) then
+                                            dim_lengths(j) = 26
+                                        else
+                                            call print_error( &
+                                                "The variable '" // trim(input_field%label) // "' contains a dimension '" // &
+                                                trim(input_field%dim_names(j)) // "' of an unknown size.")
+                                            error_status = 1
+                                            exit
+                                        end if
+                                    end do
+                                    if (error_status /= 0) exit
+                                else
+
+                                    !> Assume scalar value.
+                                    allocate(dim_lengths(1))
+                                    dim_lengths = 1
+                                end if
+
+                                !> Read data and allocate the field.
+                                if (error_status == 0) then
+
+                                    !> Check to see if a type-set field is already defined.
+                                    if (allocated(input_field%field)) then
+                                        select type (field => input_field%field)
+                                            class is (model_variable_int_base)
+                                                allocate(dat1_ik4(product(dim_lengths)))
+                                        end select
+                                    end if
+
+                                    !> Read values from the file.
+                                    if (allocated(dat1_ik4)) then
+                                        read(input_file%iunit, iostat = ierr) (dat1_ik4(j), j = 1, size(dat1_ik4))
+                                        allocate(dat1_i(size(dat1_ik4)))
+                                        dat1_i = int(dat1_ik4)
+                                        deallocate(dat1_ik4)
+                                    else
+                                        allocate(dat1_rk4(product(dim_lengths)))
+                                        read(input_file%iunit, iostat = ierr) (dat1_rk4(j), j = 1, size(dat1_rk4))
+                                        allocate(dat1_r(size(dat1_rk4)))
+                                        dat1_r = real(dat1_rk4)
+                                        deallocate(dat1_rk4)
+                                    end if
+                                    if (ierr /= 0) then
+
+                                        !> Exit the cycle (and stop reading the file) if an error occurred.
+                                        write(code, *) i
+                                        message = "An error occurred reading record " // trim(adjustl(code))
+                                        write(code, *) ierr
+                                        message = &
+                                            message // "'" // trim(input_field%label) // "' from the file (Code: " // &
+                                            trim(adjustl(code)) // ")."
+                                        call print_error(message)
+                                        error_status = 1
+                                        exit
+                                    else if (allocated(input_field%field)) then
+
+                                        !> Assign the field.
+                                        select type (field => input_field%field)
+                                            type is (model_variable_real5d)
+                                                call assign_field( &
+                                                    reshape(dat1_r, (/ &
+                                                        dim_lengths(1), dim_lengths(2), dim_lengths(3), dim_lengths(4), &
+                                                        dim_lengths(5)/)), &
+                                                    field%dat, ierr)
+                                            type is (model_variable_real4d)
+                                                call assign_field( &
+                                                    reshape(dat1_r, (/ &
+                                                        dim_lengths(1), dim_lengths(2), dim_lengths(3), dim_lengths(4)/)), &
+                                                    field%dat, ierr)
+                                            type is (model_variable_real3d)
+                                                call assign_field( &
+                                                    reshape(dat1_r, (/ &
+                                                        dim_lengths(1), dim_lengths(2), dim_lengths(3)/)), field%dat, ierr)
+                                            type is (model_variable_real2d)
+                                                call assign_field(reshape(dat1_r, (/dim_lengths(1), dim_lengths(2)/)), field%dat, ierr)
+                                            type is (model_variable_real1d)
+                                                call assign_field(reshape(dat1_r, (/dim_lengths(1)/)), field%dat, ierr)
+                                            type is (model_variable_real)
+                                                call assign_field(dat1_r(1), field%dat, ierr)
+                                            type is (model_variable_int5d)
+                                                call assign_field( &
+                                                    reshape(dat1_i, (/ &
+                                                        dim_lengths(1), dim_lengths(2), dim_lengths(3), dim_lengths(4), &
+                                                        dim_lengths(5)/)), &
+                                                    field%dat, ierr)
+                                            type is (model_variable_int4d)
+                                                call assign_field( &
+                                                    reshape(dat1_i, (/ &
+                                                        dim_lengths(1), dim_lengths(2), dim_lengths(3), dim_lengths(4)/)), &
+                                                    field%dat, ierr)
+                                            type is (model_variable_int3d)
+                                                call assign_field( &
+                                                    reshape(dat1_i, (/ &
+                                                        dim_lengths(1), dim_lengths(2), dim_lengths(3)/)), field%dat, ierr)
+                                            type is (model_variable_int2d)
+                                                call assign_field(reshape(dat1_i, (/dim_lengths(1), dim_lengths(2)/)), field%dat, ierr)
+                                            type is (model_variable_int1d)
+                                                call assign_field(reshape(dat1_i, (/dim_lengths(1)/)), field%dat, ierr)
+                                            type is (model_variable_int)
+                                                call assign_field(dat1_i(1), field%dat, ierr)
+                                        end select
+
+                                        !> Check for errors.
+                                        if (ierr /= 0) then
+                                            write(code, *) i
+                                            call print_error( &
+                                                "An error occurred assigning record " // trim(adjustl(code)) // " '" // &
+                                                trim(input_field%label) // "' from the file.")
+                                            error_status = 1
+                                            exit
+                                        end if
+                                    else
+
+                                        !> Assign the field.
+                                        select case (size(dim_lengths))
+                                            case (5)
+                                                allocate(input_field%field, source = model_variable_real5d(dat = reshape( &
+                                                    dat1_r, (/ &
+                                                        dim_lengths(1), dim_lengths(2), dim_lengths(3), dim_lengths(4), &
+                                                        dim_lengths(5)/))))
+                                            case (4)
+                                                allocate(input_field%field, source = model_variable_real4d(dat = reshape( &
+                                                    dat1_r, (/dim_lengths(1), dim_lengths(2), dim_lengths(3), dim_lengths(4)/))))
+                                            case (3)
+                                                allocate(input_field%field, source = model_variable_real3d(dat = reshape( &
+                                                    dat1_r, (/dim_lengths(1), dim_lengths(2), dim_lengths(3)/))))
+                                            case (2)
+                                                allocate(input_field%field, source = model_variable_real2d(dat = reshape( &
+                                                    dat1_r, (/dim_lengths(1), dim_lengths(2)/))))
+                                            case (1)
+                                                if (dim_lengths(1) == 1) then
+                                                    allocate(input_field%field, source = model_variable_real(dat = dat1_r(1)))
+                                                else
+                                                    allocate(input_field%field, source = model_variable_real1d(dat = reshape( &
+                                                        dat1_r, (/dim_lengths(1)/))))
+                                                end if
+                                        end select
+                                    end if
+                                    deallocate(dim_lengths)
+
+                                    !> Deallocate variables for the next variable in the loop.
+                                    if (allocated(dat1_i)) deallocate(dat1_i)
+                                    if (allocated(dat1_r)) deallocate(dat1_r)
+                                end if
+
+                                !> Update the field ID (record number) and number of variables read from file.
+                                if (allocated(input_field%field)) then
+                                    input_field%id = i
+                                    n = n + 1
+                                end if
+                            else
+
+                                !> Blank line.
+                                read(input_file%iunit, iostat = ierr)
+                                if (ierr /= 0) then
+
+                                    !> Exit the cycle (and stop reading the file) if an error occurred.
+                                    write(code, *) i
+                                    message = "An error occurred skipping the undefined record " // trim(adjustl(code))
+                                    write(code, *) ierr
+                                    message = message // " in the file (Code: " // trim(adjustl(code)) // ")."
+                                    call print_error(message)
+                                    error_status = 1
+                                    exit
+                                end if
+                            end if
+                        end associate
+                    end do
+
+                    !> Close the file.
+                    close(input_file%iunit)
+                end if
+#ifdef NETCDF
+
+            !> NetCDF format.
+            type is (io_type_nc)
+
+                !> Get the number of attribute and variables.
+                call nc4_inquire_file(input_file%iunit, natts = natts, nvars = nvars, ierr = ierr)
+                if (ierr /= 0) then
+                    error_status = 1
+                    return
+                end if
+
+                !> Allocate the working list of fields.
+                allocate(file_buffer(natts + nvars))
+
+                !> Loop through each attribute.
+                do i = 1, natts
+
+                    !> Get the name of the attribute.
+                    ierr = 0
+                    call nc4_get_attribute_name(input_file%iunit, i, attribute_name = aname, ierr = ierr)
+                    if (ierr /= 0) cycle
+
+                    !> Get the data type of the attribute.
+                    call nc4_get_attribute_type( &
+                        input_file%iunit, attribute_name = aname, dtype = atype, length = alength, ierr = ierr)
+                    if (ierr /= 0) cycle
+
+                    !> Read and save the attribute.
+                    select case (atype)
+                        case (NF90_INT64, NF90_BYTE, NF90_SHORT, NF90_INT)
+                            call nc4_get_attribute(input_file%iunit, aname, dat_i, ierr = ierr)
+                            if (ierr == 0) then
+                                allocate(file_buffer(n)%field, source = model_variable_int(dat = dat_i))
+                            end if
+                        case (NF90_FLOAT, NF90_DOUBLE)
+                            call nc4_get_attribute(input_file%iunit, aname, dat_r, ierr = ierr)
+                            if (ierr == 0) then
+                                allocate(file_buffer(n)%field, source = model_variable_real(dat = dat_r))
+                            end if
+                        case (NF90_CHAR)
+                            allocate(character(len = alength) :: dat_c)
+                            call nc4_get_attribute(input_file%iunit, aname, dat_c, ierr = ierr)
+                            if (ierr == 0) then
+                                allocate(file_buffer(n)%field, source = model_variable_char(dat = trim(dat_c)))
+                            end if
+                            deallocate(dat_c)
+                    end select
+                    if (allocated(file_buffer(n)%field)) then
+                        file_buffer(n)%label = trim(aname)
+                        file_buffer(n)%id = i
+                        n = n + 1
+                    end if
+                end do
+
+                !> Loop through each variable.
+                do i = 1, nvars
+
+                    !> Get the name of the variable.
+                    ierr = 0
+                    call nc4_get_variable_name(input_file%iunit, i, vname, ierr)
+                    if (ierr /= 0) cycle
+
+                    !> Get attributes of the variable.
+                    call nc4_get_variable_attributes( &
+                        input_file%iunit, vname, dtype = dtype, ndims = ndims, dimids = dimids, natts = nattrs, ierr = ierr)
+                    if (ierr /= 0) cycle
+
+                    !> Get dimension information.
+                    if (allocated(dim_names)) deallocate(dim_names)
+                    if (allocated(dim_lengths)) deallocate(dim_lengths)
+                    time_order = 0
+                    level_order = 0
+                    if (ndims > 5) then
+                        if (v) then
+                            write(code, *) ndims
+                            call print_warning( &
+                                "The variable '" // trim(vname) // "' contains an unsupported number of dimensions (" // &
+                                trim(adjustl(code)) // ").")
+                        end if
+                        cycle
+                    else if (ndims > 0) then
+                        allocate(dim_names(ndims), dim_lengths(ndims))
+                        ierr = 0
+                        do j = 1, ndims
+
+                            !> Get dimension information.
+                            call nc4_get_dimension_name( &
+                                input_file%iunit, dimids(j), dim_name = dim_names(j), dim_length = dim_lengths(j), ierr = ierr)
+                            if (ierr /= 0) then
+                                dim_names(j) = ''
+                            else
+
+                                !> Convert to uppercase.
+                                dim_names(j) = uppercase(dim_names(j))
+
+                                !> Check for recognized/special levels/orders.
+                                if (any(DIM_NAMES_OF_T == dim_names(j)) .and. dim_lengths(j) > 1) then
+
+                                    !> Check for time dimension.
+                                    time_order = j
+                                else if (any(DIM_NAMES_OF_L == dim_names(j))) then
+
+                                    !> Check for level ID.
+                                    if (level_order > 0) then
+                                        call print_warning( &
+                                            "Multiple dimensions of the variable '" // trim(vname) // &
+                                            "' are associated with a model level. An error may occur while mapping the field.")
+                                    end if
+                                    level_order = j
+                                end if
+                            end if
+                        end do
+
+                        !> Overwrite the size of the 'time' dimension.
+                        if (time_order > 0) dim_lengths(time_order) = input_file%series%block_interval
+                    end if
+
+                    !> Check for standard attributes.
+                    fill_r = NO_DATA_REAL
+                    fill_i = NO_DATA_INT
+                    fill_c = NO_DATA_CHAR
+                    const_mul_r = 1.0
+                    const_add_r = 0.0
+                    valid_max_r = NO_DATA_REAL
+                    valid_min_r = -NO_DATA_REAL
+                    valid_max_i = NO_DATA_INT
+                    valid_min_i = -NO_DATA_INT
+                    do j = 1, nattrs
+
+                        !> Get the attribute name.
+                        ierr = 0
+                        call nc4_get_attribute_name(input_file%iunit, aid = j, vid = i, attribute_name = aname, ierr = ierr)
+                        if (ierr == 0) then
+
+                            !> Assign the attribute value (assuming 'dtype' by known attribute names).
+                            select case (lowercase(aname))
+                                case ('long_name')
+                                    call nc4_get_attribute(input_file%iunit, aname, description, vid = i, ierr = ierr)
+                                    if (ierr /= 0) description = ''
+                                case ('units')
+                                    call nc4_get_attribute(input_file%iunit, aname, units, vid = i, ierr = ierr)
+                                    if (ierr /= 0) units = ''
+                                case ('scale_factor')
+                                    call nc4_get_attribute(input_file%iunit, aname, const_mul_r, vid = i, ierr = ierr)
+                                    if (ierr /= 0) const_mul_r = 1.0
+                                case ('add_offset')
+                                    call nc4_get_attribute(input_file%iunit, aname, const_add_r, vid = i, ierr = ierr)
+                                    if (ierr /= 0) const_add_r = 0.0
+                                case ('valid_max')
+                                    call nc4_get_attribute_type(input_file%iunit, i, aname, dtype = atype, ierr = ierr)
+                                    if (ierr == 0) then
+                                        select case (atype)
+                                            case (NF90_INT64, NF90_BYTE, NF90_SHORT, NF90_INT)
+                                                call nc4_get_attribute(input_file%iunit, aname, valid_max_i, vid = i, ierr = ierr)
+                                                if (ierr /= 0) valid_max_i = NO_DATA_INT
+                                            case (NF90_FLOAT, NF90_DOUBLE)
+                                                call nc4_get_attribute(input_file%iunit, aname, valid_max_r, vid = i, ierr = ierr)
+                                                if (ierr /= 0) valid_max_r = NO_DATA_REAL
+                                        end select
+                                    end if
+                                case ('valid_min')
+                                    call nc4_get_attribute_type(input_file%iunit, i, aname, dtype = atype, ierr = ierr)
+                                    if (ierr == 0) then
+                                        select case (atype)
+                                            case (NF90_INT64, NF90_BYTE, NF90_SHORT, NF90_INT)
+                                                call nc4_get_attribute(input_file%iunit, aname, valid_min_i, vid = i, ierr = ierr)
+                                                if (ierr /= 0) valid_min_i = NO_DATA_INT
+                                            case (NF90_FLOAT, NF90_DOUBLE)
+                                                call nc4_get_attribute(input_file%iunit, aname, valid_min_r, vid = i, ierr = ierr)
+                                                if (ierr /= 0) valid_min_r = NO_DATA_REAL
+                                        end select
+                                    end if
+                                case ('_fillvalue')
+                                    call nc4_get_attribute_type(input_file%iunit, i, aname, dtype = atype, ierr = ierr)
+                                    if (ierr == 0) then
+                                        select case (atype)
+                                            case (NF90_INT64, NF90_BYTE, NF90_SHORT, NF90_INT)
+                                                call nc4_get_attribute(input_file%iunit, aname, fill_i, vid = i, ierr = ierr)
+                                                if (ierr /= 0) fill_i = NO_DATA_INT
+                                            case (NF90_FLOAT, NF90_DOUBLE)
+                                                call nc4_get_attribute(input_file%iunit, aname, fill_r, vid = i, ierr = ierr)
+                                                if (ierr /= 0) fill_r = NO_DATA_REAL
+                                            case (NF90_CHAR)
+                                                call nc4_get_attribute(input_file%iunit, aname, fill_c, vid = i, ierr = ierr)
+                                                if (ierr /= 0) fill_c = NO_DATA_CHAR
+                                        end select
+                                    end if
+                            end select
+                        end if
+                    end do
+
+                    !> Special cases.
+                    select case (uppercase(vname))
+
+                        !> CRS information (projection).
+                        case ('CRS')
+
+                            !> Expand variable list.
+                            call expand_field_list(file_buffer, nattrs, ierr)
+
+                            !> Loop through the attributes.
+                            do j = 1, nattrs
+
+                                !> Get the attribute name.
+                                ierr = 0
+                                call nc4_get_attribute_name(input_file%iunit, aid = j, vid = i, attribute_name = aname, ierr = ierr)
+                                if (ierr /= 0) cycle
+
+                                !> Read and assign the attributes as new fields (assume 'dtype' from known variable).
+                                select case (lowercase(aname))
+                                    case ('grid_mapping_name')
+                                        call nc4_get_attribute_type(input_file%iunit, i, aname, length = alength, ierr = ierr)
+                                        if (ierr == 0) then
+                                            allocate(character(len = alength) :: dat_c)
+                                            call nc4_get_attribute(input_file%iunit, aname, dat_c, vid = i, ierr = ierr)
+                                            if (ierr == 0) then
+                                                allocate(file_buffer(n)%field, source = model_variable_char(dat = trim(dat_c)))
+                                            end if
+                                            deallocate(dat_c)
+                                        end if
+                                    case ('semi_major_axis', 'inverse_flattening', 'earth_radius', &
+                                        'grid_north_pole_latitude', 'grid_north_pole_longitude')
+                                        call nc4_get_attribute(input_file%iunit, aname, dat_r, vid = i, ierr = ierr)
+                                        if (ierr == 0) then
+                                            allocate(file_buffer(n)%field, source = model_variable_real(dat = dat_r))
+                                        end if
+                                end select
+                                if (allocated(file_buffer(n)%field)) then
+                                    file_buffer(n)%label = trim(aname)
+                                    file_buffer(n)%id = i
+                                    n = n + 1
+                                    nplus = nplus + 1
+                                end if
+                            end do
+
+                            !> Cycle to skip assigning the 'crs' variable itself.
+                            cycle
+
+                        !> GRUs.
+                        case (DIM_NAME_GRU, DIM_NAME_LANDCOVER)
+
+                            !> Get dimensions (assuming 'ndims' from known variable).
+                            call get_dimension_order(dim_names, (/DIM_NAME_M/), mapped_dim_order, ierr)
+
+                            !> Get dimension length.
+                            call nc4_get_dimension( &
+                                input_file%iunit, dim_names(mapped_dim_order(1)), dim_length = class_count, ierr = ierr)
+                            if (ierr /= 0) cycle
+
+                            !> Add the GRUs.
+                            if (class_count > 0) then
+
+                                !> Expand variable list.
+                                call expand_field_list(file_buffer, class_count + 1, ierr)
+
+                                !> Add a field for the dimension.
+                                file_buffer(n)%label = trim(DIM_NAME_NGRU)
+                                file_buffer(n)%id = i
+                                allocate(file_buffer(n)%field, source = model_variable_int(dat = class_count))
+                                n = n + 1
+
+                                !> Read the variable from file (assuming possible shapes from known variable).
+                                ierr = 0
+                                select case (size(dim_names))
+                                    case (2)
+                                        allocate(dat2_r(dim_lengths(1), dim_lengths(2)))
+                                        call nc4_get_data(input_file%iunit, vname, vid = i, dat = dat2_r, ierr = ierr)
+                                    case (3)
+                                        allocate(dat3_r(dim_lengths(1), dim_lengths(2), dim_lengths(3)))
+                                        call nc4_get_data(input_file%iunit, vname, vid = i, dat = dat3_r, ierr = ierr)
+                                    case default
+                                        call print_warning( &
+                                            "Unknown format of GRU (land cover) inputs from '" // trim(vname) // "'.")
+                                        cycle
+                                end select
+                                if (ierr /= 0) then
+                                    call print_warning("An error occurred reading the '" // trim(vname) // "' variable from file.")
+                                    cycle
+                                end if
+
+                                !> Assign each GRU as a new field (assuming 'dtype' from known variable).
+                                do j = 1, class_count
+
+                                    !> Read the variable from file (assuming possible shapes from known variable).
+                                    if (allocated(dat2_r)) then
+                                        select case (mapped_dim_order(1))
+                                            case (2)
+                                                allocate(dat1_r(size(dat2_r, 1)))
+                                                dat1_r = dat2_r(:, j)
+                                                allocate(file_buffer(n)%field, source = model_variable_real1d( &
+                                                    dat = dat1_r, const_mul = const_mul_r, const_add = const_add_r, &
+                                                    valid_max = valid_max_r, valid_min = valid_min_r, no_data_value = fill_r))
+                                                deallocate(dat1_r)
+                                                allocate(file_buffer(n)%dim_names(1))
+                                                file_buffer(n)%dim_names = (/dim_names(1)/)
+                                            case default
+                                                allocate(dat1_r(size(dat2_r, 2)))
+                                                dat1_r = dat2_r(j, :)
+                                                allocate(file_buffer(n)%field, source = model_variable_real1d( &
+                                                    dat = dat1_r, const_mul = const_mul_r, const_add = const_add_r, &
+                                                    valid_max = valid_max_r, valid_min = valid_min_r, no_data_value = fill_r))
+                                                deallocate(dat1_r)
+                                                allocate(file_buffer(n)%dim_names(1))
+                                                file_buffer(n)%dim_names = (/dim_names(2)/)
+                                        end select
+                                    else if (allocated(dat3_r)) then
+                                        select case (mapped_dim_order(1))
+                                            case (3)
+                                                allocate(dat2_r(size(dat3_r, 1), size(dat3_r, 2)))
+                                                dat2_r = dat3_r(:, :, j)
+                                                allocate(file_buffer(n)%field, source = model_variable_real2d( &
+                                                    dat = dat2_r, const_mul = const_mul_r, const_add = const_add_r, &
+                                                    valid_max = valid_max_r, valid_min = valid_min_r, no_data_value = fill_r))
+                                                deallocate(dat2_r)
+                                                allocate(file_buffer(n)%dim_names(2))
+                                                file_buffer(n)%dim_names = (/dim_names(1), dim_names(2)/)
+                                            case (2)
+                                                allocate(dat2_r(size(dat3_r, 1), size(dat3_r, 3)))
+                                                dat2_r = dat3_r(:, j, :)
+                                                allocate(file_buffer(n)%field, source = model_variable_real2d( &
+                                                    dat = dat2_r, const_mul = const_mul_r, const_add = const_add_r, &
+                                                    valid_max = valid_max_r, valid_min = valid_min_r, no_data_value = fill_r))
+                                                deallocate(dat2_r)
+                                                allocate(file_buffer(n)%dim_names(2))
+                                                file_buffer(n)%dim_names = (/dim_names(1), dim_names(3)/)
+                                            case default
+                                                allocate(dat2_r(size(dat3_r, 2), size(dat3_r, 3)))
+                                                dat2_r = dat3_r(j, :, :)
+                                                allocate(file_buffer(n)%field, source = model_variable_real2d( &
+                                                    dat = dat2_r, const_mul = const_mul_r, const_add = const_add_r, &
+                                                    valid_max = valid_max_r, valid_min = valid_min_r, no_data_value = fill_r))
+                                                deallocate(dat2_r)
+                                                allocate(file_buffer(n)%dim_names(2))
+                                                file_buffer(n)%dim_names = (/dim_names(2), dim_names(3)/)
+                                        end select
+                                    end if
+                                    write(code, *) j
+                                    file_buffer(n)%label = trim(DIM_NAME_GRU) // ' ' // trim(adjustl(code))
+                                    file_buffer(n)%id = i
+                                    file_buffer(n)%meta%label = 'GRU'
+                                    file_buffer(n)%meta%description = description
+                                    file_buffer(n)%meta%units = units
+                                    n = n + 1
+                                    nplus = nplus + 1
+                                end do
+                            end if
+                            if (allocated(dat2_r)) deallocate(dat2_r)
+                            if (allocated(dat3_r)) deallocate(dat3_r)
+                            if (allocated(mapped_dim_order)) deallocate(mapped_dim_order)
+
+                            !> Cycle to skip assinging the 'gru' variable itself.
+                            cycle
+
+                        !> Time (if multi-frame).
+                        case (DIM_NAME_TIME, DIM_NAME_T)
+
+                            !> Expand variable list.
+                            call expand_field_list(file_buffer, nattrs, ierr)
+
+                            !> Check calendar.
+                            call nc4_get_attribute_type(input_file%iunit, i, 'calendar', length = alength, ierr = ierr)
+                            if (ierr == 0) then
+                                allocate(character(len = alength) :: dat_c)
+                                call nc4_get_attribute(input_file%iunit, 'calendar', dat_c, vid = i, ierr = ierr)
+                                if (ierr /= 0) then
+                                    if (v) call print_warning( &
+                                        "Unable to read the 'calendar' attribute from the '" // trim(vname) // "' variable.")
+                                else
+                                    select case (dat_c)
+                                        case ('gregorian', 'standard')
+                                        case default
+                                            if (v) call print_warning( &
+                                                "The calendar '" // dat_c // "' of the '" // trim(vname) // &
+                                                "' variable is unknown or not supported.")
+                                    end select
+                                end if
+                                deallocate(dat_c)
+                            end if
+
+                            !> Mark file as multi-frame.
+                            if (time_order > 0) input_file%series%multi_frame = .true.
+
+                            !> Set the current position in the file.
+                            input_file%series%ipos = 1
+
+                            !> Derive the start-time (from the first record of the 'time' variable).
+                            if (ndims /= 1) then
+                                write(code, *) ndims
+                                call print_error( &
+                                    "The '" // trim(vname) // "' variable contains an incompatible number of dimensions " // &
+                                    "for the time dimension (" // trim(adjustl(code)) // "). " // &
+                                    "The variable must contain only one dimension.")
+                                error_status = 1
+                                return
+                            else
+                                call nc4_get_time( &
+                                    input_file%iunit, &
+                                    year = input_file%series%start%year, month = input_file%series%start%month, &
+                                    day = input_file%series%start%day, jday = input_file%series%start%jday, &
+                                    hour = input_file%series%start%hour, minutes = input_file%series%start%minutes, &
+                                    time_shift = input_file%series%time_offset, &
+                                    ierr = ierr)
+                                if (ierr /= 0) then
+                                    error_status = 1
+                                    return
+                                end if
+                            end if
+
+                            !> Cycle to skip assinging the 'time' variable itself.
+                            cycle
+                    end select
+
+                    !> Register the field.
+                    ierr = 0
+                    select case (dtype)
+                        case (NF90_INT64, NF90_BYTE, NF90_SHORT, NF90_INT)
+                            select case (ndims)
+                                case (5)
+                                    allocate(dat5_i(dim_lengths(1), dim_lengths(2), dim_lengths(3), dim_lengths(4), dim_lengths(5)))
+                                    dat5_i = huge(dat5_i)
+                                    if (time_order == 0) then
+                                        call nc4_get_data(input_file%iunit, vname, vid = i, dat = dat5_i, ierr = ierr)
+                                    end if
+                                    allocate(file_buffer(n)%field, source = model_variable_int5d( &
+                                        dat = dat5_i, valid_max = valid_max_i, valid_min = valid_min_i, no_data_value = fill_i))
+                                    deallocate(dat5_i)
+                                case (4)
+                                    allocate(dat4_i(dim_lengths(1), dim_lengths(2), dim_lengths(3), dim_lengths(4)))
+                                    dat4_i = huge(dat4_i)
+                                    if (time_order == 0) then
+                                        call nc4_get_data(input_file%iunit, vname, vid = i, dat = dat4_i, ierr = ierr)
+                                    end if
+                                    allocate(file_buffer(n)%field, source = model_variable_int4d( &
+                                        dat = dat4_i, valid_max = valid_max_i, valid_min = valid_min_i, no_data_value = fill_i))
+                                    deallocate(dat4_i)
+                                case (3)
+                                    allocate(dat3_i(dim_lengths(1), dim_lengths(2), dim_lengths(3)))
+                                    dat3_i = huge(dat3_i)
+                                    if (time_order == 0) then
+                                        call nc4_get_data(input_file%iunit, vname, vid = i, dat = dat3_i, ierr = ierr)
+                                    end if
+                                    allocate(file_buffer(n)%field, source = model_variable_int3d( &
+                                        dat = dat3_i, valid_max = valid_max_i, valid_min = valid_min_i, no_data_value = fill_i))
+                                    deallocate(dat3_i)
+                                case (2)
+                                    allocate(dat2_i(dim_lengths(1), dim_lengths(2)))
+                                    dat2_i = huge(dat2_i)
+                                    if (time_order == 0) then
+                                        call nc4_get_data(input_file%iunit, vname, vid = i, dat = dat2_i, ierr = ierr)
+                                    end if
+                                    allocate(file_buffer(n)%field, source = model_variable_int2d( &
+                                        dat = dat2_i, valid_max = valid_max_i, valid_min = valid_min_i, no_data_value = fill_i))
+                                    deallocate(dat2_i)
+                                case (1)
+                                    allocate(dat1_i(dim_lengths(1)))
+                                    dat1_i = huge(dat1_i)
+                                    if (time_order == 0) then
+                                        call nc4_get_data(input_file%iunit, vname, vid = i, dat = dat1_i, ierr = ierr)
+                                    end if
+                                    allocate(file_buffer(n)%field, source = model_variable_int1d( &
+                                        dat = dat1_i, valid_max = valid_max_i, valid_min = valid_min_i, no_data_value = fill_i))
+                                    deallocate(dat1_i)
+                                case default
+                                    call nc4_get_data(input_file%iunit, vname, vid = i, dat = dat_i, ierr = ierr)
+                                    if (ierr == 0) then
+                                        allocate(file_buffer(n)%field, source = model_variable_int( &
+                                            dat = dat_i, valid_max = valid_max_i, valid_min = valid_min_i, no_data_value = fill_i))
+                                    end if
+                            end select
+                        case (NF90_FLOAT, NF90_DOUBLE)
+                            select case (ndims)
+                                case (5)
+                                    allocate(dat5_r(dim_lengths(1), dim_lengths(2), dim_lengths(3), dim_lengths(4), dim_lengths(5)))
+                                    dat5_r = huge(dat5_r)
+                                    if (time_order == 0) then
+                                        call nc4_get_data(input_file%iunit, vname, vid = i, dat = dat5_r, ierr = ierr)
+                                    end if
+                                    allocate(file_buffer(n)%field, source = model_variable_real5d( &
+                                        dat = dat5_r, const_mul = const_mul_r, const_add = const_add_r, &
+                                        valid_max = valid_max_r, valid_min = valid_min_r, no_data_value = fill_r))
+                                    deallocate(dat5_r)
+                                case (4)
+                                    allocate(dat4_r(dim_lengths(1), dim_lengths(2), dim_lengths(3), dim_lengths(4)))
+                                    dat4_r = huge(dat4_r)
+                                    if (time_order == 0) then
+                                        call nc4_get_data(input_file%iunit, vname, vid = i, dat = dat4_r, ierr = ierr)
+                                    end if
+                                    allocate(file_buffer(n)%field, source = model_variable_real4d( &
+                                        dat = dat4_r, const_mul = const_mul_r, const_add = const_add_r, &
+                                        valid_max = valid_max_r, valid_min = valid_min_r, no_data_value = fill_r))
+                                    deallocate(dat4_r)
+                                case (3)
+                                    allocate(dat3_r(dim_lengths(1), dim_lengths(2), dim_lengths(3)))
+                                    dat3_r = huge(dat3_r)
+                                    if (time_order == 0) then
+                                        call nc4_get_data(input_file%iunit, vname, vid = i, dat = dat3_r, ierr = ierr)
+                                    end if
+                                    allocate(file_buffer(n)%field, source = model_variable_real3d( &
+                                        dat = dat3_r, const_mul = const_mul_r, const_add = const_add_r, &
+                                        valid_max = valid_max_r, valid_min = valid_min_r, no_data_value = fill_r))
+                                    deallocate(dat3_r)
+                                case (2)
+                                    allocate(dat2_r(dim_lengths(1), dim_lengths(2)))
+                                    dat2_r = huge(dat2_r)
+                                    if (time_order == 0) then
+                                        call nc4_get_data(input_file%iunit, vname, vid = i, dat = dat2_r, ierr = ierr)
+                                    end if
+                                    allocate(file_buffer(n)%field, source = model_variable_real2d( &
+                                        dat = dat2_r, const_mul = const_mul_r, const_add = const_add_r, &
+                                        valid_max = valid_max_r, valid_min = valid_min_r, no_data_value = fill_r))
+                                    deallocate(dat2_r)
+                                case (1)
+                                    allocate(dat1_r(dim_lengths(1)))
+                                    dat1_r = huge(dat1_r)
+                                    if (time_order == 0) then
+                                        call nc4_get_data(input_file%iunit, vname, vid = i, dat = dat1_r, ierr = ierr)
+                                    end if
+                                    allocate(file_buffer(n)%field, source = model_variable_real1d( &
+                                        dat = dat1_r, const_mul = const_mul_r, const_add = const_add_r, &
+                                        valid_max = valid_max_r, valid_min = valid_min_r, no_data_value = fill_r))
+                                    deallocate(dat1_r)
+                                case default
+                                    call nc4_get_data(input_file%iunit, vname, vid = i, dat = dat_r, ierr = ierr)
+                                    if (ierr == 0) then
+                                        allocate(file_buffer(n)%field, source = model_variable_real( &
+                                            dat = dat_r, const_mul = const_mul_r, const_add = const_add_r, &
+                                            valid_max = valid_max_r, valid_min = valid_min_r, no_data_value = fill_r))
+                                    end if
+                            end select
+                        case (NF90_CHAR)
+                            if (time_order > 0) then
+                                call print_error("'char' type time-series are not supported for variable '" // trim(vname) // "'.")
+                                cycle
+                            end if
+                            select case (ndims)
+                                case (2)
+
+                                    !> Try to determine the non-character length dimension.
+                                    call get_dimension_order( &
+                                        dim_names, &
+                                        (/DIM_NAME_X, DIM_NAME_Y, DIM_NAME_M, DIM_NAME_K, DIM_NAME_N, DIM_NAME_B, DIM_NAME_G/), &
+                                        mapped_dim_order, ierr)
+                                    if (count(mapped_dim_order == 1) == 1) then
+                                        allocate(character(len = dim_lengths(2)) :: dat1_c(dim_lengths(1)))
+                                        j = 1
+                                    else if (count(mapped_dim_order == 2) == 1) then
+                                        allocate(character(len = dim_lengths(1)) :: dat1_c(dim_lengths(2)))
+                                        j = 2
+                                    end if
+                                    if (allocated(dat1_c)) then
+                                        call nc4_get_data(input_file%iunit, vname, vid = i, dat = dat1_c, ierr = ierr)
+                                        if (ierr == 0) then
+                                            allocate(file_buffer(n)%field, source = model_variable_char1d( &
+                                                dat = dat1_c, no_data_value = fill_c))
+                                        end if
+                                        deallocate(dat1_c)
+                                        allocate(file_buffer(n)%dim_names(1))
+                                        file_buffer(n)%dim_names(1) = dim_names(j)
+                                    end if
+                                case (1)
+                                    allocate(character(len = dim_lengths(1)) :: dat_c)
+                                    call nc4_get_data(input_file%iunit, vname, vid = i, dat = dat_c, ierr = ierr)
+                                    if (ierr == 0) then
+                                        allocate(file_buffer(n)%field, source = model_variable_char(dat = dat_c))
+                                    end if
+                                    deallocate(dat_c)
+                                case default
+                                    if (v) then
+                                        write(code, *) ndims
+                                        call print_warning( &
+                                            "The variable '" // trim(vname) // "' of type 'character' contains an unsupported " // &
+                                            "number of dimensions (" // trim(adjustl(code)) // ").")
+                                    end if
+                            end select
+                        case default
+                            if (v) then
+                                write(code, *) ndims
+                                call print_warning( &
+                                    "The variable '" // trim(vname) // "' is an unknown or unsupported data format (Code: " // &
+                                    trim(adjustl(code)) // ").")
+                            end if
+                    end select
+
+                    !> Update and assign general attributes.
+                    if (allocated(file_buffer(n)%field)) then
+                        file_buffer(n)%label = trim(vname)
+                        file_buffer(n)%id = i
+                        file_buffer(n)%meta%label = vname
+                        file_buffer(n)%meta%description = description
+                        file_buffer(n)%meta%units = units
+                        file_buffer(n)%mapping%time_order = time_order
+                        file_buffer(n)%mapping%level_order = level_order
+                        if (allocated(dim_names) .and. .not. allocated(file_buffer(n)%dim_names)) then
+                            allocate(file_buffer(n)%dim_names(size(dim_names)), source = dim_names)
+                        end if
+                        n = n + 1
+                    end if
+                end do
+
+                !> Close the file.
+                if (.not. input_file%series%multi_frame) call nc4_close_file(input_file%iunit, input_file%full_path, ierr = ierr)
+#endif
+
+            !> CLASS MET format.
+            type is (io_type_met)
+
+                !> Rewind the file.
+                rewind(input_file%iunit)
+
+                !> Check if a multi-frame file.
+                if (input_file%series%multi_frame) then
+
+                    !> Set the number of active variables based on existing field definitions in the file.
+                    if (allocated(input_file%fields)) n = size(input_file%fields) + 1
+
+                    !> Set the current position in the file and return.
+                    input_file%series%ipos = 1
+
+                    !> Read the start date.
+                    allocate(dat1_i(4))
+                    read(input_file%iunit, *, iostat = ierr) dat1_i
+                    if (ierr == 0) then
+                        input_file%series%start%year = dat1_i(4)
+                        input_file%series%start%jday = dat1_i(3)
+                        call jday_to_date(dat1_i(4), dat1_i(3), input_file%series%start%month, input_file%series%start%day)
+                        input_file%series%start%hour = dat1_i(1)
+                        input_file%series%start%minutes = dat1_i(2)
+                    else
+                        call print_warning("Unable to read the time associated with the first frame in the file.")
+                        ierr = 0
+                    end if
+
+                    !> Rewind file.
+                    rewind(input_file%iunit)
+                end if
+        end select
+
+        !> Check for errors.
+        if (error_status /= 0) then
+            return
+        else
+
+            !> Adjust the total number of fields read (since it increments at the end of the loop).
+            n = n - 1
+        end if
+
+        !> Print diagnostic summary.
+        if (DIAGNOSEMODE) then
+            if (natts /= -1) then
+                write(code, *) natts
+                call print_message(trim(adjustl(code)) // " attributes found in the file.")
+            end if
+            if (nvars /= -1) then
+                write(code, *) nvars + nplus
+                call print_message(trim(adjustl(code)) // " variables found in the file.")
+            end if
+        end if
+        if (v) then
+            if (n > 0) then
+                write(code, *) n
+                call print_message(trim(adjustl(code)) // " valid fields found in the file.")
+            else
+                call print_warning("No valid fields were found in the file.")
+            end if
+        end if
+
+        !> Combine the buffer and input file lists.
+        if (allocated(file_buffer)) then
+            call combine_field_list(input_file%fields, file_buffer, error_status)
+        end if
+
+        !> Populate field metadata.
+        call create_field_maps_from_list(input_file%fields, error_status)
+
+        !> Print a diagnostic summary of active fields in the file.
+        if (allocated(input_file%fields)) then
+            do i = 1, size(input_file%fields)
+
+                !> Allocate the mapped dimension order.
+!-                allocate(input_file%fields(i)%mapping%mapped_dim_order(size(DIM_NAMES_OF_ORDERS)))
+!-                input_file%fields(i)%mapping%mapped_dim_order = 0
+
+                !> Assume a basin-wide value 'DIM_NAME_B' for scalar fields (or will get updated).
+!-                input_file%fields(i)%mapping%mapped_dim_order(MAP_ORDER_B) = 1
+
+                !> Overrides.
+                select type (field => input_file%fields(i)%field)
+                    class is (model_variable_real_base)
+                        if (field%const_mul == 1.0) field%const_mul = input_file%overrides%const_mul
+                        if (field%const_add == 0.0) field%const_add = input_file%overrides%const_add
+                end select
+
+                !> Map dimensions of the variable.
+!-                if (allocated(input_file%fields(i)%dim_names)) then
+!-                    if (input_file%fields(i)%mapping%time_order /= 1 .or. size(input_file%fields(i)%dim_names) /= 1) then
+
+                        !> Map spatial dimensions (if the only dimension is not time 'DIM_NAME_T').
+!-                        call get_dimension_order( &
+!-                            input_file%fields(i)%dim_names, DIM_NAMES_OF_ORDERS, input_file%fields(i)%mapping%mapped_dim_order, &
+!-                            ierr)
+!-                    end if
+!-                end if
+
+                !> Derive field name and level from ID.
+!-                call get_field_name_and_level( &
+!-                    input_file%fields(i)%label, input_file%fields(i)%field_name, input_file%fields(i)%level, &
+!-                    input_file%fields(i)%level_id, ierr)
+!-                if (ierr /= 0) then
+!-                    call print_warning( &
+!-                        "An error occurred identifying the label associated with the '" // trim(input_file%fields(i)%label) // &
+!-                        "' variable.")
+!-                end if
+
+                !> Print message.
+                call print_info("Found the variable '" // trim(input_file%fields(i)%label) // "'.")
+
+                !> Check if the field is mapped to an external ID.
+                if (allocated(input_file%field_map)) then
+                    do j = 1, size(input_file%field_map, 1)
+                        if (input_file%fields(i)%label == input_file%field_map(j, 1)) then
+
+                            !> Check if the field name is mapping to the same field name.
+                            if (input_file%field_map(j, 1) /= input_file%field_map(j, 2)) then
+
+                                !> Save the internal name.
+                                input_file%fields(i)%mapping%mapped_name = trim(input_file%field_map(j, 2))
+                                call print_remark( &
+                                    "Mapping the field '" // trim(input_file%fields(i)%label) // "' to the '" // &
+                                    trim(input_file%field_map(j, 2)) // "' variable.")
+
+                                !> Update field name.
+                                input_file%fields(i)%field_name = input_file%fields(i)%mapping%mapped_name
+                            end if
+                            exit
+                        end if
+                    end do
+                end if
+            end do
+        end if
+
+    end subroutine
+
+    subroutine create_field_maps_from_list(field_list, error_status)
+
+        !> Parsing utilities.
+        use parse_utilities, only: to_uppercase
+
+        !> Input/output variables.
+        type(io_field) field_list(:)
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        integer j, i, ierr
+
+        !> Return status.
+        error_status = 0
+
+        !> Loop through fields.
+        do i = 1, size(field_list)
+            associate(input_field => field_list(i))
+                associate(maps => input_field%mapping)
+                    if (.not. allocated(maps%mapped_dim_order)) then
+
+                        !> Allocate the mapped dimension order.
+                        allocate(maps%mapped_dim_order(size(DIM_NAMES_OF_ORDERS)))
+                        maps%mapped_dim_order = 0
+
+                        !> Assume a basin-wide value 'DIM_NAME_B' for scalar fields (or will get updated).
+                        maps%mapped_dim_order(MAP_ORDER_B) = 1
+
+                        !> Map dimensions of the variable.
+                        if (allocated(field_list(i)%dim_names)) then
+                            if (maps%time_order == 0 .or. size(field_list(i)%dim_names) > 1) then
+
+                                !> Map spatial dimensions (if the only dimension is not time 'DIM_NAME_T').
+                                call get_dimension_order(field_list(i)%dim_names, DIM_NAMES_OF_ORDERS, maps%mapped_dim_order, ierr)
+                            end if
+
+                            !> Rename dimensions.
+                            do j = 1, size(field_list(i)%dim_names)
+                                if (any(DIM_NAMES_OF_Y == to_uppercase(field_list(i)%dim_names(j)))) then
+                                    field_list(i)%dim_names(j) = DIM_NAME_Y
+                                else if (any(DIM_NAMES_OF_X == to_uppercase(field_list(i)%dim_names(j)))) then
+                                    field_list(i)%dim_names(j) = DIM_NAME_X
+                                else if (any(DIM_NAMES_OF_T == to_uppercase(field_list(i)%dim_names(j)))) then
+                                    field_list(i)%dim_names(j) = DIM_NAME_T
+                                else if (any(DIM_NAMES_OF_N == to_uppercase(field_list(i)%dim_names(j)))) then
+                                    field_list(i)%dim_names(j) = DIM_NAME_N
+                                else if (any(DIM_NAMES_OF_M == to_uppercase(field_list(i)%dim_names(j)))) then
+                                    field_list(i)%dim_names(j) = DIM_NAME_M
+                                else if (any(DIM_NAMES_OF_K == to_uppercase(field_list(i)%dim_names(j)))) then
+                                    field_list(i)%dim_names(j) = DIM_NAME_K
+                                else if (any(DIM_NAMES_OF_B == to_uppercase(field_list(i)%dim_names(j)))) then
+                                    field_list(i)%dim_names(j) = DIM_NAME_B
+                                else if (any(DIM_NAMES_OF_G == to_uppercase(field_list(i)%dim_names(j)))) then
+                                    field_list(i)%dim_names(j) = DIM_NAME_G
+                                else if (any(DIM_NAMES_OF_L == to_uppercase(field_list(i)%dim_names(j)))) then
+                                    field_list(i)%dim_names(j) = DIM_NAME_L
+                                else
+                                    field_list(i)%dim_names(j) = to_uppercase(field_list(i)%dim_names(j))
+                                end if
+                            end do
+
+                            !> Get dimension lengths.
+                            select type (field => input_field%field)
+                                type is (model_variable_real5d)
+                                    allocate(input_field%dim_lengths(5), source = shape(field%dat))
+                                type is (model_variable_real4d)
+                                    allocate(input_field%dim_lengths(4), source = shape(field%dat))
+                                type is (model_variable_real3d)
+                                    allocate(input_field%dim_lengths(3), source = shape(field%dat))
+                                type is (model_variable_real2d)
+                                    allocate(input_field%dim_lengths(2), source = shape(field%dat))
+                                type is (model_variable_real1d)
+                                    allocate(input_field%dim_lengths(1), source = shape(field%dat))
+                                type is (model_variable_int5d)
+                                    allocate(input_field%dim_lengths(5), source = shape(field%dat))
+                                type is (model_variable_int4d)
+                                    allocate(input_field%dim_lengths(4), source = shape(field%dat))
+                                type is (model_variable_int3d)
+                                    allocate(input_field%dim_lengths(3), source = shape(field%dat))
+                                type is (model_variable_int2d)
+                                    allocate(input_field%dim_lengths(2), source = shape(field%dat))
+                                type is (model_variable_int1d)
+                                    allocate(input_field%dim_lengths(1), source = shape(field%dat))
+                                type is (model_variable_char1d)
+                                    allocate(input_field%dim_lengths(1), source = shape(field%dat))
+                            end select
+                        end if
+                    end if
+                end associate
+
+                !> Derive the field name and level from the label.
+                call get_field_name_and_level( &
+                    input_field%label, input_field%field_name, input_field%level, input_field%level_dim_name, &
+                    input_field%level_id, ierr)
+                if (ierr /= 0) then
+                    call print_warning( &
+                        "An error occurred identifying the label associated with the '" // trim(input_field%label) // &
+                        "' variable.")
+                end if
+
+                !> Convert the field name and level label to uppercase.
+!-                input_field%field_name = to_uppercase(input_field%field_name)
+!-                input_field%level = to_uppercase(input_field%level)
+            end associate
+        end do
+
+    end subroutine
+
+    subroutine activate_variable_from_field(input_field, error_status)
+
+        !> Modules.
+!-        use strings, only: uppercase
+!-        use variable_names
+        use model_variables, only: vs
+        use variable_maps
+
+        !> Input/output variables.
+        !*  input_field: Input field to assign to 'output_field'.
+        !*  error_status: Status returned by the operation (optional; 0: normal).
+        type(io_field), intent(in) :: input_field
+        integer, intent(out) :: error_status
+
+        !> Local variables
+        integer ierr
+        logical variable_assigned, lsaved
+!-        integer i, isaved
+
+        !> Status.
+        error_status = 0
+
+        !> Identify and assign variables.
+!-        isaved = 1
+!-        select case (uppercase(input_field%field_name))
+
+            !> Meteorology/climatology variables.
+!-            case (VN_FSIN)
+!-                if (associated(vs%grid)) then
+!-                    if (.not. allocated(vs%grid%fsin)) then
+!-                        allocate(vs%grid%fsin(vs%grid%dim_length))
+!-                        vs%grid%fsin = huge(vs%grid%fsin)
+!-                    end if
+!-                end if
+!-                if (associated(vs%tile)) then
+!-                    if (.not. allocated(vs%tile%fsin)) then
+!-                        allocate(vs%tile%fsin(vs%tile%dim_length))
+!-                        vs%tile%fsin = huge(vs%tile%fsin)
+!-                    end if
+!-                end if
+!-            case (VN_FLIN)
+!-                if (associated(vs%grid)) then
+!-                    if (.not. allocated(vs%grid%flin)) then
+!-                        allocate(vs%grid%flin(vs%grid%dim_length))
+!-                        vs%grid%flin = huge(vs%grid%flin)
+!-                    end if
+!-                end if
+!-                if (associated(vs%tile)) then
+!-                    if (.not. allocated(vs%tile%flin)) then
+!-                        allocate(vs%tile%flin(vs%tile%dim_length))
+!-                        vs%tile%flin = huge(vs%tile%flin)
+!-                    end if
+!-                end if
+!-            case (VN_TA)
+!-                if (associated(vs%grid)) then
+!-                    if (.not. allocated(vs%grid%ta)) then
+!-                        allocate(vs%grid%ta(vs%grid%dim_length))
+!-                        vs%grid%ta = huge(vs%grid%ta)
+!-                    end if
+!-                end if
+!-                if (associated(vs%tile)) then
+!-                    if (.not. allocated(vs%tile%ta)) then
+!-                        allocate(vs%tile%ta(vs%tile%dim_length))
+!-                        vs%tile%ta = huge(vs%tile%ta)
+!-                    end if
+!-                end if
+!-            case (VN_QA)
+!-                if (associated(vs%grid)) then
+!-                    if (.not. allocated(vs%grid%qa)) then
+!-                        allocate(vs%grid%qa(vs%grid%dim_length))
+!-                        vs%grid%qa = huge(vs%grid%qa)
+!-                    end if
+!-                end if
+!-                if (associated(vs%tile)) then
+!-                    if (.not. allocated(vs%tile%qa)) then
+!-                        allocate(vs%tile%qa(vs%tile%dim_length))
+!-                        vs%tile%qa = huge(vs%tile%qa)
+!-                    end if
+!-                end if
+!-            case (VN_PRES)
+!-                if (associated(vs%grid)) then
+!-                    if (.not. allocated(vs%grid%pres)) then
+!-                        allocate(vs%grid%pres(vs%grid%dim_length))
+!-                        vs%grid%pres = huge(vs%grid%pres)
+!-                    end if
+!-                end if
+!-                if (associated(vs%tile)) then
+!-                    if (.not. allocated(vs%tile%pres)) then
+!-                        allocate(vs%tile%pres(vs%tile%dim_length))
+!-                        vs%tile%pres = huge(vs%tile%pres)
+!-                    end if
+!-                end if
+!-            case (VN_UU)
+!-                if (associated(vs%grid)) then
+!-                    if (.not. allocated(vs%grid%uu)) then
+!-                        allocate(vs%grid%uu(vs%grid%dim_length))
+!-                        vs%grid%uu = huge(vs%grid%uu)
+!-                    end if
+!-                end if
+!-                if (associated(vs%tile)) then
+!-                    if (.not. allocated(vs%tile%uu)) then
+!-                        allocate(vs%tile%uu(vs%tile%dim_length))
+!-                        vs%tile%uu = huge(vs%tile%uu)
+!-                    end if
+!-                end if
+!-            case (VN_VV)
+!-                if (associated(vs%grid)) then
+!-                    if (.not. allocated(vs%grid%vv)) then
+!-                        allocate(vs%grid%vv(vs%grid%dim_length))
+!-                        vs%grid%vv = huge(vs%grid%vv)
+!-                    end if
+!-                end if
+!-                if (associated(vs%tile)) then
+!-                    if (.not. allocated(vs%tile%vv)) then
+!-                        allocate(vs%tile%vv(vs%tile%dim_length))
+!-                        vs%tile%vv = huge(vs%tile%vv)
+!-                    end if
+!-                end if
+!-            case (VN_UV)
+!-                if (associated(vs%grid)) then
+!-                    if (.not. allocated(vs%grid%uv)) then
+!-                        allocate(vs%grid%uv(vs%grid%dim_length))
+!-                        vs%grid%uv = huge(vs%grid%uv)
+!-                    end if
+!-                end if
+!-                if (associated(vs%tile)) then
+!-                    if (.not. allocated(vs%tile%uv)) then
+!-                        allocate(vs%tile%uv(vs%tile%dim_length))
+!-                        vs%tile%uv = huge(vs%tile%uv)
+!-                    end if
+!-                end if
+!-            case (VN_WDIR)
+!-                if (associated(vs%grid)) then
+!-                    if (.not. allocated(vs%grid%wdir)) then
+!-                        allocate(vs%grid%wdir(vs%grid%dim_length))
+!-                        vs%grid%wdir = huge(vs%grid%wdir)
+!-                    end if
+!-                end if
+!-                if (associated(vs%tile)) then
+!-                    if (.not. allocated(vs%tile%wdir)) then
+!-                        allocate(vs%tile%wdir(vs%tile%dim_length))
+!-                        vs%tile%wdir = huge(vs%tile%wdir)
+!-                    end if
+!-                end if
+!-            case (VN_PRERN)
+!-                if (associated(vs%grid)) then
+!-                    if (.not. allocated(vs%grid%prern)) then
+!-                        allocate(vs%grid%prern(vs%grid%dim_length))
+!-                        vs%grid%prern = huge(vs%grid%prern)
+!-                    end if
+!-                end if
+!-                if (associated(vs%tile)) then
+!-                    if (.not. allocated(vs%tile%prern)) then
+!-                        allocate(vs%tile%prern(vs%tile%dim_length))
+!-                        vs%tile%prern = huge(vs%tile%prern)
+!-                    end if
+!-                end if
+!-            case (VN_PRESNO)
+!-                if (associated(vs%grid)) then
+!-                    if (.not. allocated(vs%grid%presno)) then
+!-                        allocate(vs%grid%presno(vs%grid%dim_length))
+!-                        vs%grid%presno = huge(vs%grid%presno)
+!-                    end if
+!-                end if
+!-                if (associated(vs%tile)) then
+!-                    if (.not. allocated(vs%tile%presno)) then
+!-                        allocate(vs%tile%presno(vs%tile%dim_length))
+!-                        vs%tile%presno = huge(vs%tile%presno)
+!-                    end if
+!-                end if
+!-            case (VN_PRE)
+!-                if (associated(vs%grid)) then
+!-                    if (.not. allocated(vs%grid%pre)) then
+!-                        allocate(vs%grid%pre(vs%grid%dim_length))
+!-                        vs%grid%pre = huge(vs%grid%pre)
+!-                    end if
+!-                end if
+!-                if (associated(vs%tile)) then
+!-                    if (.not. allocated(vs%tile%pre)) then
+!-                        allocate(vs%tile%pre(vs%tile%dim_length))
+!-                        vs%tile%pre = huge(vs%tile%pre)
+!-                    end if
+!-                end if
+
+            !> Groundwater/lower zone storage variables.
+!-            case (VN_RCHG)
+!-                if (associated(vs%grid)) then
+!-                    if (.not. allocated(vs%grid%rchg)) then
+!-                        allocate(vs%grid%rchg(vs%grid%dim_length))
+!-                        vs%grid%rchg = huge(vs%grid%rchg)
+!-                    end if
+!-                end if
+!-                if (associated(vs%tile)) then
+!-                    if (.not. allocated(vs%tile%rchg)) then
+!-                        allocate(vs%tile%rchg(vs%tile%dim_length))
+!-                        vs%tile%rchg = huge(vs%tile%rchg)
+!-                    end if
+!-                end if
+
+            !> Routing variables.
+!-            case (VN_RFF)
+!-                if (associated(vs%grid)) then
+!-                    if (.not. allocated(vs%grid%rff)) then
+!-                        allocate(vs%grid%rff(vs%grid%dim_length))
+!-                        vs%grid%rff = huge(vs%grid%rff)
+!-                    end if
+!-                end if
+!-                if (associated(vs%tile)) then
+!-                    if (.not. allocated(vs%tile%rff)) then
+!-                        allocate(vs%tile%rff(vs%tile%dim_length))
+!-                        vs%tile%rff = huge(vs%tile%rff)
+!-                    end if
+!-                end if
+
+            !> Others (not saved).
+!-            case default
+!-                isaved = 0
+!-        end select
+
+        !> Activate the variable.
+        variable_assigned = .false.
+        if (associated(vs%grid)) then
+            call model_variable_activate_from_name(vs%grid, input_field%field_name, variable_assigned = lsaved, error_status = ierr)
+            if (ierr /= 0) then
+                call print_error( &
+                    "An error occurred activating the 'grid' instance of the '" // trim(input_field%label) // "' variable.")
+                error_status = ierr
+            else
+                if (lsaved) variable_assigned = lsaved
+            end if
+        end if
+        if (associated(vs%tile)) then
+            call model_variable_activate_from_name(vs%tile, input_field%field_name, variable_assigned = lsaved, error_status = ierr)
+            if (ierr /= 0) then
+                call print_error( &
+                    "An error occurred activating the 'tile' instance of the '" // trim(input_field%label) // "' variable.")
+                error_status = ierr
+            else
+                if (lsaved) variable_assigned = lsaved
+            end if
+        end if
+
+        !> Check status.
+        if (variable_assigned) call print_info("Activated the variable '" // trim(input_field%label) // "'.")
+
+    end subroutine
+
+    subroutine activate_variables_from_field_list(field_list, error_status)
+
+        !> Input/output variables.
+        !*  field_list: List of fields (read from file).
+        !*  error_status: Status returned by the operation (optional; 0: normal).
+        type(io_field), dimension(:), intent(in) :: field_list
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        integer i, ierr
+
+        !> Status.
+        error_status = 0
+
+        !> Loop through the fields to assign remaining variables.
+        ierr = 0
+        do i = 1, size(field_list)
+            call activate_variable_from_field(field_list(i), ierr)
+            if (ierr /= 0) error_status = ierr
+        end do
+
+    end subroutine
+
+    subroutine read_frame_from_file(input_file, skip_data, quiet, error_status)
+#ifdef NETCDF
+
+        !> I/O modules.
+        use nc_io
+#endif
+
+        !> Input/output variables.
+        !*  input_file: Input file object ('io_file').
+        !*  skip_data: .true. to skip data and just move the 'ipos' position in the file.
+        !*  quiet: .true. to suppress block formatting (optional, default: .false.).
+        !*  error_status: Status returned by the operation (optional; 0: normal).
+        type(io_file) input_file
+        logical, intent(in), optional :: skip_data
+        logical, intent(in), optional :: quiet
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        logical v, s
+
+        !> File utility variables.
+        character(len = SHORT_FIELD_LENGTH) str
+        real(kind = 4), allocatable :: dat1_rk4(:)
+        real, allocatable :: dat1_r(:)
+        integer t, j, i, nrecs, ierr
+#ifdef NETCDF
+        integer start5(5), start4(4), start3(3), start2(2), start1(1)
+#endif
+
+        !> Error status.
+        if (.not. allocated(input_file%container)) then
+            error_status = 1
+        else
+            error_status = 0
+        end if
+
+        !> Check verbosity (override if 'DIAGNOSEMODE' is enabled).
+        v = .true.
+        if (present(quiet)) v = .not. quiet
+        if (DIAGNOSEMODE) v = .true.
+
+        !> Return if not a multi-frame file or the file contains no fields.
+        if (.not. input_file%series%multi_frame .or. .not. allocated(input_file%fields)) return
+
+        !> Check if skipping data.
+        s = .false.
+        if (present(skip_data)) s = skip_data
+
+        !> Read data in the file.
+        nrecs = 0
+        select type (file_type => input_file%container)
+
+            !> r2c ASCII format.
+            type is (io_type_r2c)
+
+                !> Read from the file (assume field type from known file type).
+                select type (this => input_file%fields(1)%field)
+                    type is (model_variable_real3d)
+                        do t = 1, input_file%series%block_interval
+
+                            !> Read values.
+                            read(input_file%iunit, *, iostat = ierr) !frame marker
+                            if (ierr == 0) read(input_file%iunit, *) &
+                                ((this%dat(i, j, t), i = 1, size(this%dat, 1)), j = 1, size(this%dat, 2))
+                            if (ierr == 0) read(input_file%iunit, *, iostat = ierr) !frame marker
+                            if (ierr /= 0) then
+                                error_status = 1
+                                exit
+                            end if
+                            nrecs = nrecs + 1
+
+                            !> Skip frames one at a time.
+                            if (s) exit
+                        end do
+                end select
+
+            !> Simple text formats (txt, asc, CSV).
+            type is (io_type_char_delimited)
+
+                !> Read from the file.
+                ierr = 0
+                if (s) then
+
+                    !> Skip line.
+                    read(input_file%iunit, *, iostat = ierr)
+                    if (ierr /= 0) then
+                        error_status = 1
+                    else
+                        nrecs = 1
+                    end if
+                else
+
+                    !> Read blocks.
+                    do t = 1, input_file%series%block_interval
+
+                        !> Assign values to the field (assume field type from known file type).
+                        select type (this => input_file%fields(1)%field)
+                            type is (model_variable_real2d)
+
+                                !> Read values (skipping the specified number of columns from the start of the line).
+                                read(input_file%iunit, *, iostat = ierr) &
+                                    (str, i = 1, file_type%n_skip_cols), (this%dat(i, t), i = 1, size(this%dat))
+                                if (ierr /= 0) then
+                                    error_status = 1
+                                    exit
+                                else
+
+                                    !> Apply conversions.
+                                    this%dat(:, t) = this%const_mul*this%dat(:, t) + this%const_add
+                                end if
+                        end select
+
+                        !> Increment the number of records read.
+                        nrecs = nrecs + 1
+                    end do
+                end if
+
+            !> Binary sequential format (seq).
+            type is (io_type_seq)
+
+                !> Read from the file.
+                ierr = 0
+                if (s) then
+
+                    !> Skip record.
+                    read(input_file%iunit, iostat = ierr)
+                    if (ierr == 0) read(input_file%iunit, iostat = ierr)
+                    if (ierr /= 0) then
+                        error_status = 1
+                    else
+                        nrecs = 1
+                    end if
+                else
+
+                    !> Read blocks.
+                    do t = 1, input_file%series%block_interval
+
+                        !> Assign values to the field (assume field type from known file type).
+                        select type (this => input_file%fields(1)%field)
+                            type is (model_variable_real2d)
+
+                                !> Read values.
+                                allocate(dat1_rk4(size(this%dat, 1)))
+                                read(input_file%iunit, iostat = ierr) !date marker
+                                if (ierr == 0) read(input_file%iunit, iostat = ierr) (dat1_rk4(i), i = 1, size(this%dat, 1))
+                                if (ierr /= 0) then
+                                    error_status = 1
+                                    exit
+                                else
+
+                                    !> Apply conversions.
+                                    this%dat(:, t) = this%const_mul*real(dat1_rk4, kind = kind(this%dat)) + this%const_add
+                                end if
+                                deallocate(dat1_rk4)
+                        end select
+
+                        !> Increment the number of records read.
+                        nrecs = nrecs + 1
+                    end do
+                end if
+#ifdef NETCDF
+
+            !> NetCDF format.
+            type is (io_type_nc)
+
+                !> Loop through each registered field.
+                if (s) then
+                    nrecs = 1
+                else
+                    do i = 1, size(input_file%fields)
+
+                        !> Read the field.
+                        start5 = 1
+                        start4 = 1
+                        start3 = 1
+                        start2 = 1
+                        start1 = 1
+                        ierr = 0
+                        select type (this => input_file%fields(i)%field)
+                            type is (model_variable_int5d)
+                                if (input_file%fields(i)%mapping%time_order > 0) then
+                                    start5(input_file%fields(i)%mapping%time_order) = input_file%series%ipos
+                                    call nc4_get_data( &
+                                        input_file%iunit, input_file%fields(i)%label, input_file%fields(i)%id, this%dat, &
+                                        start = start5, ierr = ierr)
+                                end if
+                            type is (model_variable_int4d)
+                                if (input_file%fields(i)%mapping%time_order > 0) then
+                                    start4(input_file%fields(i)%mapping%time_order) = input_file%series%ipos
+                                    call nc4_get_data( &
+                                        input_file%iunit, input_file%fields(i)%label, input_file%fields(i)%id, this%dat, &
+                                        start = start4, ierr = ierr)
+                                end if
+                            type is (model_variable_int3d)
+                                if (input_file%fields(i)%mapping%time_order > 0) then
+                                    start3(input_file%fields(i)%mapping%time_order) = input_file%series%ipos
+                                    call nc4_get_data( &
+                                        input_file%iunit, input_file%fields(i)%label, input_file%fields(i)%id, this%dat, &
+                                        start = start3, ierr = ierr)
+                                end if
+                            type is (model_variable_int2d)
+                                if (input_file%fields(i)%mapping%time_order > 0) then
+                                    start2(input_file%fields(i)%mapping%time_order) = input_file%series%ipos
+                                    call nc4_get_data( &
+                                        input_file%iunit, input_file%fields(i)%label, input_file%fields(i)%id, this%dat, &
+                                        start = start2, ierr = ierr)
+                                end if
+                            type is (model_variable_int1d)
+                                if (input_file%fields(i)%mapping%time_order > 0) then
+                                    start1(input_file%fields(i)%mapping%time_order) = input_file%series%ipos
+                                    call nc4_get_data( &
+                                        input_file%iunit, input_file%fields(i)%label, input_file%fields(i)%id, this%dat, &
+                                        start = start1, ierr = ierr)
+                                end if
+                            type is (model_variable_real5d)
+                                if (input_file%fields(i)%mapping%time_order > 0) then
+                                    start5(input_file%fields(i)%mapping%time_order) = input_file%series%ipos
+                                    call nc4_get_data( &
+                                        input_file%iunit, input_file%fields(i)%label, input_file%fields(i)%id, this%dat, &
+                                        start = start5, ierr = ierr)
+                                    if (ierr == 0) then
+
+                                        !> Apply conversions.
+                                        this%dat = this%const_mul*this%dat + this%const_add
+                                    end if
+                                end if
+                            type is (model_variable_real4d)
+                                if (input_file%fields(i)%mapping%time_order > 0) then
+                                    start4(input_file%fields(i)%mapping%time_order) = input_file%series%ipos
+                                    call nc4_get_data( &
+                                        input_file%iunit, input_file%fields(i)%label, input_file%fields(i)%id, this%dat, &
+                                        start = start4, ierr = ierr)
+                                    if (ierr == 0) then
+
+                                        !> Apply conversions.
+                                        this%dat = this%const_mul*this%dat + this%const_add
+                                    end if
+                                end if
+                            type is (model_variable_real3d)
+                                if (input_file%fields(i)%mapping%time_order > 0) then
+                                    start3(input_file%fields(i)%mapping%time_order) = input_file%series%ipos
+                                    call nc4_get_data( &
+                                        input_file%iunit, input_file%fields(i)%label, input_file%fields(i)%id, this%dat, &
+                                        start = start3, ierr = ierr)
+                                    if (ierr == 0) then
+
+                                        !> Apply conversions.
+                                        this%dat = this%const_mul*this%dat + this%const_add
+                                    end if
+                                end if
+                            type is (model_variable_real2d)
+                                if (input_file%fields(i)%mapping%time_order > 0) then
+                                    start2(input_file%fields(i)%mapping%time_order) = input_file%series%ipos
+                                    call nc4_get_data( &
+                                        input_file%iunit, input_file%fields(i)%label, input_file%fields(i)%id, this%dat, &
+                                        start = start2, ierr = ierr)
+                                    if (ierr == 0) then
+
+                                        !> Apply conversions.
+                                        this%dat = this%const_mul*this%dat + this%const_add
+                                    end if
+                                end if
+                            type is (model_variable_real1d)
+                                if (input_file%fields(i)%mapping%time_order > 0) then
+                                    start1(input_file%fields(i)%mapping%time_order) = input_file%series%ipos
+                                    call nc4_get_data( &
+                                        input_file%iunit, input_file%fields(i)%label, input_file%fields(i)%id, this%dat, &
+                                        start = start1, ierr = ierr)
+                                    if (ierr == 0) then
+
+                                        !> Apply conversions.
+                                        this%dat = this%const_mul*this%dat + this%const_add
+                                    end if
+                                end if
+                        end select
+
+                        !> Check for errors.
+                        if (ierr /= 0) then
+                            error_status = 1
+                        else
+                            nrecs = input_file%series%block_interval
+                        end if
+                    end do
+                end if
+#endif
+
+            !> CLASS MET format.
+            type is (io_type_met)
+
+                !> Allocate the temporary variable.
+                if (file_type%rr_sr) then
+                    allocate(dat1_r(9))
+                else
+                    allocate(dat1_r(7))
+                end if
+
+                !> Read from the file.
+                ierr = 0
+                if (s) then
+
+                    !> Skip line.
+                    read(input_file%iunit, *, iostat = ierr)
+                    if (ierr /= 0) then
+                        error_status = 1
+                    else
+                        nrecs = 1
+                    end if
+                else
+
+                    !> Read blocks.
+                    do t = 1, input_file%series%block_interval
+
+                        !> Read fields from the line (skipping the first four columns of date information).
+                        read(input_file%iunit, *, iostat = ierr) (str, i = 1, 4), (dat1_r(i), i = 1, size(dat1_r))
+                        if (ierr /= 0) then
+                            error_status = 1
+                            exit
+                        else
+
+                            !> Assign fields.
+                            do i = 1, size(input_file%fields)
+                                select type (this => input_file%fields(i)%field)
+                                    type is (model_variable_real1d)
+
+                                        !> Apply conversions.
+                                        this%dat(t) = this%const_mul*dat1_r(input_file%fields(i)%id) + this%const_add
+                                end select
+                            end do
+
+                            !> Increment the number of records read.
+                            nrecs = nrecs + 1
+                        end if
+                    end do
+                end if
+        end select
+
+        !> Increment the positional counter.
+        input_file%series%ipos = input_file%series%ipos + nrecs
+
+    end subroutine
+
+    subroutine create_ranked_field_and_maps(input_field, error_status)
+
+        !> Variables.
+        use model_variables, only: vs
+
+        !> Input/output variables.
+        !*  input_field: Input field to update.
+        !*  error_status: Status returned by the operation (0: normal).
+        type(io_field) input_field
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        real, allocatable :: dat_cell_r(:), dat_tile_r(:)
+        integer, allocatable :: dat_cell_i(:), dat_tile_i(:), dim_lengths(:)
+        character(len = SHORT_FIELD_LENGTH), allocatable :: dat_cell_short_c(:), dat_tile_short_c(:)
+        character(len = LONG_FIELD_LENGTH), allocatable :: dat_cell_long_c(:), dat_tile_long_c(:)
+        integer j, i
+
+        !> Status.
+        error_status = 0
+
+        !> Return if the variable group is not active.
+        if (.not. associated(vs%grid) .and. .not. associated(vs%tile)) then
+            error_status = 1
+            return
+        end if
+
+        !> Allocate temporary variables.
+        if (associated(vs%grid)) then
+            allocate(dat_cell_r(vs%grid%dim_length), dat_cell_i(vs%grid%dim_length))
+            dat_cell_r = NO_DATA_REAL
+            dat_cell_i = NO_DATA_INT
+        end if
+        if (associated(vs%tile)) then
+            allocate(dat_tile_r(vs%tile%dim_length), dat_tile_i(vs%tile%dim_length))
+            dat_tile_r = NO_DATA_REAL
+            dat_tile_i = NO_DATA_INT
+        end if
+
+        !> Allocate the map.
+        select type (this => input_field%field)
+            type is (model_variable_real5d)
+                if (associated(vs%grid)) then
+                    allocate(input_field%mapping%mapped_to_cell, source = model_variable_real1d(dat = dat_cell_r))
+                end if
+                if (associated(vs%tile)) then
+                    allocate(input_field%mapping%mapped_to_tile, source = model_variable_real1d(dat = dat_tile_r))
+                end if
+                allocate(dim_lengths(5), source = shape(this%dat))
+            type is (model_variable_real4d)
+                if (associated(vs%grid)) then
+                    allocate(input_field%mapping%mapped_to_cell, source = model_variable_real1d(dat = dat_cell_r))
+                end if
+                if (associated(vs%tile)) then
+                    allocate(input_field%mapping%mapped_to_tile, source = model_variable_real1d(dat = dat_tile_r))
+                end if
+                allocate(dim_lengths(4), source = shape(this%dat))
+            type is (model_variable_real3d)
+                if (associated(vs%grid)) then
+                    allocate(input_field%mapping%mapped_to_cell, source = model_variable_real1d(dat = dat_cell_r))
+                end if
+                if (associated(vs%tile)) then
+                    allocate(input_field%mapping%mapped_to_tile, source = model_variable_real1d(dat = dat_tile_r))
+                end if
+                allocate(dim_lengths(3), source = shape(this%dat))
+            type is (model_variable_real2d)
+                if (associated(vs%grid)) then
+                    allocate(input_field%mapping%mapped_to_cell, source = model_variable_real1d(dat = dat_cell_r))
+                end if
+                if (associated(vs%tile)) then
+                    allocate(input_field%mapping%mapped_to_tile, source = model_variable_real1d(dat = dat_tile_r))
+                end if
+                allocate(dim_lengths(2), source = shape(this%dat))
+            type is (model_variable_real1d)
+                if (associated(vs%grid)) then
+                    allocate(input_field%mapping%mapped_to_cell, source = model_variable_real1d(dat = dat_cell_r))
+                end if
+                if (associated(vs%tile)) then
+                    allocate(input_field%mapping%mapped_to_tile, source = model_variable_real1d(dat = dat_tile_r))
+                end if
+                allocate(dim_lengths(1), source = shape(this%dat))
+            type is (model_variable_real)
+                if (associated(vs%grid)) then
+                    allocate(input_field%mapping%mapped_to_cell, source = model_variable_real1d(dat = dat_cell_r))
+                end if
+                if (associated(vs%tile)) then
+                    allocate(input_field%mapping%mapped_to_tile, source = model_variable_real1d(dat = dat_tile_r))
+                end if
+            type is (model_variable_int5d)
+                if (associated(vs%grid)) then
+                    allocate(input_field%mapping%mapped_to_cell, source = model_variable_int1d(dat = dat_cell_i))
+                end if
+                if (associated(vs%tile)) then
+                    allocate(input_field%mapping%mapped_to_tile, source = model_variable_int1d(dat = dat_tile_i))
+                end if
+                allocate(dim_lengths(5), source = shape(this%dat))
+            type is (model_variable_int4d)
+                if (associated(vs%grid)) then
+                    allocate(input_field%mapping%mapped_to_cell, source = model_variable_int1d(dat = dat_cell_i))
+                end if
+                if (associated(vs%tile)) then
+                    allocate(input_field%mapping%mapped_to_tile, source = model_variable_int1d(dat = dat_tile_i))
+                end if
+                allocate(dim_lengths(4), source = shape(this%dat))
+            type is (model_variable_int3d)
+                if (associated(vs%grid)) then
+                    allocate(input_field%mapping%mapped_to_cell, source = model_variable_int1d(dat = dat_cell_i))
+                end if
+                if (associated(vs%tile)) then
+                    allocate(input_field%mapping%mapped_to_tile, source = model_variable_int1d(dat = dat_tile_i))
+                end if
+                allocate(dim_lengths(3), source = shape(this%dat))
+            type is (model_variable_int2d)
+                if (associated(vs%grid)) then
+                    allocate(input_field%mapping%mapped_to_cell, source = model_variable_int1d(dat = dat_cell_i))
+                end if
+                if (associated(vs%tile)) then
+                    allocate(input_field%mapping%mapped_to_tile, source = model_variable_int1d(dat = dat_tile_i))
+                end if
+                allocate(dim_lengths(2), source = shape(this%dat))
+            type is (model_variable_int1d)
+                if (associated(vs%grid)) then
+                    allocate(input_field%mapping%mapped_to_cell, source = model_variable_int1d(dat = dat_cell_i))
+                end if
+                if (associated(vs%tile)) then
+                    allocate(input_field%mapping%mapped_to_tile, source = model_variable_int1d(dat = dat_tile_i))
+                end if
+                allocate(dim_lengths(1), source = shape(this%dat))
+            type is (model_variable_int)
+                if (associated(vs%grid)) then
+                    allocate(input_field%mapping%mapped_to_cell, source = model_variable_int1d(dat = dat_cell_i))
+                end if
+                if (associated(vs%tile)) then
+                    allocate(input_field%mapping%mapped_to_tile, source = model_variable_int1d(dat = dat_tile_i))
+                end if
+            type is (model_variable_char1d)
+                if (associated(vs%grid)) then
+                    allocate(dat_cell_short_c(vs%grid%dim_length))
+                    dat_cell_short_c = ''
+                    allocate(input_field%mapping%mapped_to_cell, source = model_variable_char1d(dat = dat_cell_short_c))
+                end if
+                if (associated(vs%tile)) then
+                    allocate(dat_tile_short_c(vs%tile%dim_length))
+                    dat_tile_short_c = ''
+                    allocate(input_field%mapping%mapped_to_tile, source = model_variable_char1d(dat = dat_tile_short_c))
+                end if
+                allocate(dim_lengths(1), source = shape(this%dat))
+            type is (model_variable_char)
+                if (associated(vs%grid)) then
+                    allocate(dat_cell_long_c(vs%grid%dim_length))
+                    dat_cell_long_c = ''
+                    allocate(input_field%mapping%mapped_to_cell, source = model_variable_char1d(dat = dat_cell_long_c))
+                end if
+                if (associated(vs%tile)) then
+                    allocate(dat_tile_long_c(vs%tile%dim_length))
+                    dat_tile_long_c = ''
+                    allocate(input_field%mapping%mapped_to_tile, source = model_variable_char1d(dat = dat_tile_long_c))
+                end if
+            class default
+
+                !> Return since not a field that requires allocation or mapping.
+                return
+        end select
+
+        !> Allocate the mapping and target variables.
+        if (associated(vs%grid)) then
+            select type (this => input_field%mapping%mapped_to_cell)
+                type is (model_variable_real1d)
+                    this%dat = NO_DATA_REAL
+                type is (model_variable_int1d)
+                    this%dat = NO_DATA_INT
+                type is (model_variable_char1d)
+                    this%dat = ''
+            end select
+            if (allocated(dim_lengths)) then
+                allocate(input_field%mapping%cell_map(size(dim_lengths), vs%grid%dim_length))
+                input_field%mapping%cell_map = 0
+            end if
+        end if
+        if (associated(vs%tile)) then
+            select type (this => input_field%mapping%mapped_to_tile)
+                type is (model_variable_real1d)
+                    this%dat = NO_DATA_REAL
+                type is (model_variable_int1d)
+                    this%dat = NO_DATA_INT
+                type is (model_variable_char1d)
+                    this%dat = ''
+            end select
+            if (allocated(dim_lengths)) then
+                allocate(input_field%mapping%tile_map(size(dim_lengths), vs%tile%dim_length))
+                input_field%mapping%tile_map = 0
+            end if
+        end if
+
+        !> Return if no multi-dimensional mapping is required.
+        if (.not. allocated(dim_lengths)) return
+
+        !> Map known dimensions.
+!?        do i = 1, size(input_field%mapping%mapped_dim_order)
+
+            !> Identify the map.
+            if (input_field%mapping%mapped_dim_order(MAP_ORDER_X) > 0) then
+                if (allocated(input_field%mapping%cell_map)) then
+                    input_field%mapping%cell_map(input_field%mapping%mapped_dim_order(MAP_ORDER_X), :) = vs%grid%from_grid_x
+                end if
+                if (allocated(input_field%mapping%tile_map)) then
+                    input_field%mapping%tile_map(input_field%mapping%mapped_dim_order(MAP_ORDER_X), :) = vs%tile%from_grid_x
+                end if
+            end if
+            if (input_field%mapping%mapped_dim_order(MAP_ORDER_Y) > 0) then
+                if (allocated(input_field%mapping%cell_map)) then
+                    input_field%mapping%cell_map(input_field%mapping%mapped_dim_order(MAP_ORDER_Y), :) = vs%grid%from_grid_y
+                end if
+                if (allocated(input_field%mapping%tile_map)) then
+                    input_field%mapping%tile_map(input_field%mapping%mapped_dim_order(MAP_ORDER_Y), :) = vs%tile%from_grid_y
+                end if
+            end if
+            if (input_field%mapping%mapped_dim_order(MAP_ORDER_M) > 0) then
+                if (allocated(input_field%mapping%tile_map)) then
+                    input_field%mapping%tile_map(input_field%mapping%mapped_dim_order(MAP_ORDER_M), :) = vs%tile%from_gru
+                end if
+            end if
+            if (input_field%mapping%mapped_dim_order(MAP_ORDER_K) > 0) then
+                if (allocated(input_field%mapping%cell_map)) then
+                    input_field%mapping%cell_map(input_field%mapping%mapped_dim_order(MAP_ORDER_K), :) = vs%grid%from_riverclass
+                end if
+                if (allocated(input_field%mapping%tile_map)) then
+                    input_field%mapping%tile_map(input_field%mapping%mapped_dim_order(MAP_ORDER_K), :) = vs%tile%from_riverclass
+                end if
+            end if
+            if (input_field%mapping%mapped_dim_order(MAP_ORDER_N) > 0) then
+                if (allocated(input_field%mapping%cell_map)) then
+                    do j = 1, vs%grid%dim_length
+                        input_field%mapping%cell_map(input_field%mapping%mapped_dim_order(MAP_ORDER_N), j) = j
+                    end do
+                end if
+                if (allocated(input_field%mapping%tile_map)) then
+                    input_field%mapping%tile_map(input_field%mapping%mapped_dim_order(MAP_ORDER_N), :) = vs%tile%from_cell
+                end if
+            end if
+            if (input_field%mapping%mapped_dim_order(MAP_ORDER_B) > 0) then
+                if (allocated(input_field%mapping%cell_map)) then
+                    input_field%mapping%cell_map(input_field%mapping%mapped_dim_order(MAP_ORDER_B), :) = 1
+                end if
+                if (allocated(input_field%mapping%tile_map)) then
+                    input_field%mapping%tile_map(input_field%mapping%mapped_dim_order(MAP_ORDER_B), :) = 1
+                end if
+            end if
+            if (input_field%mapping%mapped_dim_order(MAP_ORDER_G) > 0) then
+                if (allocated(input_field%mapping%tile_map)) then
+                    do j = 1, vs%tile%dim_length
+                        input_field%mapping%tile_map(input_field%mapping%mapped_dim_order(MAP_ORDER_G), j) = j
+                    end do
+                end if
+            end if
+!?        end do
+
+        !> Check for unmapped dimensions.
+        do i = 1, size(dim_lengths)
+            if (i == input_field%mapping%time_order) then
+
+                !> Set an initial index to the 'time' dimension.
+                if (associated(vs%grid)) input_field%mapping%cell_map(i, :) = 1
+                if (associated(vs%tile)) input_field%mapping%tile_map(i, :) = 1
+            else if (dim_lengths(i) == 1) then
+
+                !> Allow a map if the size of the unmapped dimensions is one.
+                if (associated(vs%grid)) then
+                    if (all(input_field%mapping%cell_map(i, :) == 0)) input_field%mapping%cell_map(i, :) = 1
+                end if
+                if (associated(vs%tile)) then
+                    if (all(input_field%mapping%tile_map(i, :) == 0)) input_field%mapping%tile_map(i, :) = 1
+                end if
+            else
+
+                !> Check for unassigned field.
+                if (associated(vs%grid)) then
+                    if (all(input_field%mapping%cell_map(i, :) == 0)) error_status = 1
+                end if
+                if (associated(vs%tile)) then
+                    if (all(input_field%mapping%tile_map(i, :) == 0)) error_status = 1
+                end if
+            end if
+        end do
+
+    end subroutine
+
+    subroutine map_field_to_ranked_output(input_field, time_id, level_id, error_status)
+
+        !> Modules.
+        use model_variables, only: vs
+
+        !> Input/output variables.
+        !*  input_field: Input field to update.
+        !*  time_id: Current index in the 'time' dimension (optional).
+        !*  level_id: Current index in the 'level' dimension (optional).
+        !*  error_status: Status returned by the operation (0: normal).
+        type(io_field) input_field
+        integer, intent(in), optional :: time_id
+        integer, intent(in), optional :: level_id
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        real, allocatable :: dat1_r(:)
+        integer t, s, i
+
+        !> Status.
+        error_status = 0
+
+        !> Create field maps (if not already created).
+        if (allocated(input_field%dim_names)) then
+            if (.not. (allocated(input_field%mapping%mapped_to_cell) .or. allocated(input_field%mapping%mapped_to_tile))) then
+                call create_ranked_field_and_maps(input_field, error_status)
+                if (error_status /= 0) then
+                    call print_error( &
+                        "An error occurred identifying and mapping the spatial dimensions of the '" // &
+                        trim(input_field%label) // "' variable.")
+                    return
+                end if
+            end if
+        end if
+
+        !> Reset fields.
+        if (allocated(input_field%mapping%mapped_to_cell)) then
+            select type (this => input_field%mapping%mapped_to_cell)
+                type is (model_variable_real1d)
+                    this%dat = NO_DATA_REAL
+                type is (model_variable_int1d)
+                    this%dat = NO_DATA_INT
+                type is (model_variable_char1d)
+                    this%dat = ''
+            end select
+        end if
+        if (allocated(input_field%mapping%mapped_to_tile)) then
+            select type (this => input_field%mapping%mapped_to_tile)
+                type is (model_variable_real1d)
+                    this%dat = NO_DATA_REAL
+                type is (model_variable_int1d)
+                    this%dat = NO_DATA_INT
+                type is (model_variable_char1d)
+                    this%dat = ''
+            end select
+        end if
+
+        !> Return if maps are not defined.
+        if (.not. allocated(input_field%mapping%cell_map) .and. .not. allocated(input_field%mapping%tile_map)) return
+
+        !> Time index.
+        t = 1
+        if (present(time_id)) t = time_id
+        s = 1
+        if (present(level_id)) s = level_id
+
+        !> Map the field.
+        if (allocated(input_field%mapping%cell_map)) then
+            if (input_field%mapping%time_order > 0) input_field%mapping%cell_map(input_field%mapping%time_order, :) = t
+            if (input_field%mapping%level_order > 0) input_field%mapping%cell_map(input_field%mapping%level_order, :) = s
+        end if
+        if (allocated(input_field%mapping%tile_map)) then
+            if (input_field%mapping%time_order > 0) input_field%mapping%tile_map(input_field%mapping%time_order, :) = t
+            if (input_field%mapping%level_order > 0) input_field%mapping%tile_map(input_field%mapping%level_order, :) = s
+        end if
+        call assign_field_to_mapped_value(input_field, error_status)
+
+    end subroutine
+
+    subroutine create_mapped_output_from_field(input_field, time_id, level_id, error_status)
+
+        !> Modules.
+        use model_variables, only: vs
+
+        !> Input/output variables.
+        !*  input_field: Input field to update.
+        !*  time_id: Current index in the 'time' dimension (optional).
+        !*  level_id: Current index in the 'level' dimension (optional).
+        !*  error_status: Status returned by the operation (0: normal).
+        type(io_field) input_field
+        integer, intent(in), optional :: time_id
+        integer, intent(in), optional :: level_id
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        integer i
+
+        !> Map the variable.
+        call map_field_to_ranked_output(input_field, time_id, level_id, error_status)
+        if (error_status /= 0 .and. input_field%mapping%time_order == 0) then
+            call print_error("An error occurred mapping the '" // trim(input_field%label) // "' variable.")
+            return
+        end if
+
+        !> Special conditions not covered by mapping alone.
+        if (allocated(input_field%mapping%cell_map) .and. allocated(input_field%mapping%tile_map)) then
+            select type (cell => input_field%mapping%mapped_to_cell)
+                type is (model_variable_real1d)
+                    select type (tile => input_field%mapping%mapped_to_tile)
+                        type is (model_variable_real1d)
+                            if (input_field%mapping%mapped_dim_order(MAP_ORDER_M) > 0) then
+                                if (all(tile%dat /= huge(tile%dat))) then
+                                    cell%dat = 0.0
+                                    do i = 1, vs%tile%dim_length
+                                        cell%dat(vs%tile%from_cell(i)) = &
+                                            cell%dat(vs%tile%from_cell(i)) + tile%dat(i)*vs%tile%area_weight(i)
+                                    end do
+                                end if
+                            else if (input_field%mapping%mapped_dim_order(MAP_ORDER_G) > 0) then
+                                if (all(tile%dat /= huge(tile%dat))) then
+                                    cell%dat = 0.0
+                                    do i = 1, vs%tile%dim_length
+                                        cell%dat(vs%tile%from_cell(i)) = &
+                                            cell%dat(vs%tile%from_cell(i)) + tile%dat(i)*vs%tile%area_weight(i)
+                                    end do
+                                end if
+                            end if
+                    end select
+            end select
+        end if
+
+    end subroutine
+
+    subroutine create_mapped_output_from_field_list(field_list, time_id, level_id, error_status)
+
+        !> Input/output variables.
+        !*  field_list: List of fields (read from file).
+        !*  time_id: Current index in the 'time' dimension (optional).
+        !*  level_id: Current index in the 'level' dimension (optional).
+        !*  error_status: Status returned by the operation (0: normal).
+        type(io_field), dimension(:), intent(in) :: field_list
+        integer, intent(in), optional :: time_id
+        integer, intent(in), optional :: level_id
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        integer i, ierr
+
+        !> Status.
+        error_status = 0
+
+        !> Loop through the fields to assign remaining variables.
+        ierr = 0
+        do i = 1, size(field_list)
+            call create_mapped_output_from_field(field_list(i), time_id, level_id, ierr)
+            if (ierr /= 0) error_status = ierr
+        end do
+
+    end subroutine
+
+    subroutine assign_cell_values_real(input_field, ranked_output, error_status)
+
+        !> Modules.
+        use model_variables, only: vs
+
+        !> Input/output variables.
+        type(io_field), intent(in) :: input_field
+        real, dimension(:), allocatable :: ranked_output
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        integer i, ierr
+
+        !> Return status.
+        error_status = 0
+
+        !> Reset variable.
+        if (.not. allocated(ranked_output)) allocate(ranked_output(vs%grid%dim_length))
+        ranked_output = huge(ranked_output)
+
+        !> Assign 'cell' value from field.
+        select type (this => input_field%mapping%mapped_to_cell)
+            type is (model_variable_real1d)
+                ranked_output = this%dat
+            type is (model_variable_real)
+                ranked_output(:) = this%dat
+            type is (model_variable_int1d)
+                ranked_output = real(this%dat)
+            type is (model_variable_int)
+                ranked_output(:) = real(this%dat)
+            type is (model_variable_char1d)
+                do i = 1, size(ranked_output)
+                    read(this%dat(i), *, iostat = ierr) ranked_output(i)
+                    if (ierr /= 0) error_status = 1
+                end do
+            type is (model_variable_char)
+                if (size(ranked_output) > 0) then
+                    read(this%dat, *, iostat = ierr) ranked_output(i)
+                    if (ierr /= 0) then
+                        error_status = 1
+                    else
+                        ranked_output(:) = ranked_output(1)
+                    end if
+                end if
+        end select
+
+        !> Check for errors.
+        if (all(ranked_output == huge(ranked_output))) error_status = 1
+
+    end subroutine
+
+!-    subroutine assign_cell_values_real_pntr(input_field, ranked_output_pntr, error_status)
+
+        !> Modules.
+!-        use model_variables, only: vs
+
+        !> Input/output variables.
+!-        type(io_field), intent(in) :: input_field
+!-        real, dimension(:), pointer :: ranked_output_pntr
+!-        integer, intent(out) :: error_status
+
+        !> Local variables.
+!-        integer i, ierr
+
+        !> Return status.
+!-        error_status = 0
+
+        !> Reset variable.
+!-        if (.not. associated(ranked_output_pntr)) allocate(ranked_output_pntr(vs%grid%dim_length))
+!-        ranked_output_pntr = huge(ranked_output_pntr)
+
+        !> Assign 'cell' value from field.
+!-        select type (this => input_field%mapping%mapped_to_cell)
+!-            type is (model_variable_real1d)
+!-                ranked_output_pntr = this%dat
+!-            type is (model_variable_real)
+!-                ranked_output_pntr(:) = this%dat
+!-            type is (model_variable_int1d)
+!-                ranked_output_pntr = real(this%dat)
+!-            type is (model_variable_int)
+!-                ranked_output_pntr(:) = real(this%dat)
+!-            type is (model_variable_char1d)
+!-                do i = 1, size(ranked_output_pntr)
+!-                    read(this%dat(i), *, iostat = ierr) ranked_output_pntr(i)
+!-                    if (ierr /= 0) error_status = 1
+!-                end do
+!-            type is (model_variable_char)
+!-                if (size(ranked_output_pntr) > 0) then
+!-                    read(this%dat, *, iostat = ierr) ranked_output_pntr(i)
+!-                    if (ierr /= 0) then
+!-                        error_status = 1
+!-                    else
+!-                        ranked_output_pntr(:) = ranked_output_pntr(1)
+!-                    end if
+!-                end if
+!-        end select
+
+        !> Check for errors.
+!-        if (all(ranked_output_pntr == huge(ranked_output_pntr))) error_status = 1
+
+!-    end subroutine
+
+    subroutine assign_cell_values_int(input_field, ranked_output, error_status)
+
+        !> Modules.
+        use model_variables, only: vs
+
+        !> Input/output variables.
+        type(io_field), intent(in) :: input_field
+        integer, dimension(:), allocatable :: ranked_output
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        integer i, ierr
+
+        !> Return status.
+        error_status = 0
+
+        !> Reset variable.
+        if (.not. allocated(ranked_output)) allocate(ranked_output(vs%grid%dim_length))
+        ranked_output = huge(ranked_output)
+
+        !> Assign 'cell' value from field.
+        select type (this => input_field%mapping%mapped_to_cell)
+            type is (model_variable_real1d)
+                ranked_output = int(this%dat)
+            type is (model_variable_real)
+                ranked_output(:) = int(this%dat)
+            type is (model_variable_int1d)
+                ranked_output = this%dat
+            type is (model_variable_int)
+                ranked_output(:) = this%dat
+            type is (model_variable_char1d)
+                do i = 1, size(ranked_output)
+                    read(this%dat(i), *, iostat = ierr) ranked_output(i)
+                    if (ierr /= 0) error_status = 1
+                end do
+            type is (model_variable_char)
+                if (size(ranked_output) > 0) then
+                    read(this%dat, *, iostat = ierr) ranked_output(i)
+                    if (ierr /= 0) then
+                        error_status = 1
+                    else
+                        ranked_output(:) = ranked_output(1)
+                    end if
+                end if
+        end select
+
+        !> Check for errors.
+        if (all(ranked_output == huge(ranked_output))) error_status = 1
+
+    end subroutine
+
+!-    subroutine assign_cell_values_int_pntr(input_field, ranked_output_pntr, error_status)
+
+        !> Modules.
+!-        use model_variables, only: vs
+
+        !> Input/output variables.
+!-        type(io_field), intent(in) :: input_field
+!-        integer, dimension(:), pointer :: ranked_output_pntr
+!-        integer, intent(out) :: error_status
+
+        !> Local variables.
+!-        integer i, ierr
+
+        !> Return status.
+!-        error_status = 0
+
+        !> Reset variable.
+!-        if (.not. associated(ranked_output_pntr)) allocate(ranked_output_pntr(vs%grid%dim_length))
+!-        ranked_output_pntr = huge(ranked_output_pntr)
+
+        !> Assign 'cell' value from field.
+!-        select type (this => input_field%mapping%mapped_to_cell)
+!-            type is (model_variable_real1d)
+!-                ranked_output_pntr = int(this%dat)
+!-            type is (model_variable_real)
+!-                ranked_output_pntr(:) = int(this%dat)
+!-            type is (model_variable_int1d)
+!-                ranked_output_pntr = this%dat
+!-            type is (model_variable_int)
+!-                ranked_output_pntr(:) = this%dat
+!-            type is (model_variable_char1d)
+!-                do i = 1, size(ranked_output_pntr)
+!-                    read(this%dat(i), *, iostat = ierr) ranked_output_pntr(i)
+!-                    if (ierr /= 0) error_status = 1
+!-                end do
+!-            type is (model_variable_char)
+!-                if (size(ranked_output_pntr) > 0) then
+!-                    read(this%dat, *, iostat = ierr) ranked_output_pntr(i)
+!-                    if (ierr /= 0) then
+!-                        error_status = 1
+!-                    else
+!-                        ranked_output_pntr(:) = ranked_output_pntr(1)
+!-                    end if
+!-                end if
+!-        end select
+
+        !> Check for errors.
+!-        if (all(ranked_output_pntr == huge(ranked_output_pntr))) error_status = 1
+
+!-    end subroutine
+
+    subroutine assign_tile_values_real(input_field, ranked_output, error_status)
+
+        !> Modules.
+        use model_variables, only: vs
+
+        !> Input/output variables.
+        type(io_field), intent(in) :: input_field
+        real, dimension(:), allocatable :: ranked_output
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        integer i, ierr
+
+        !> Return status.
+        error_status = 0
+
+        !> Reset variable.
+        if (.not. allocated(ranked_output)) allocate(ranked_output(vs%tile%dim_length))
+        ranked_output = huge(ranked_output)
+
+        !> Assign 'cell' value from field.
+        select type (this => input_field%mapping%mapped_to_tile)
+            type is (model_variable_real1d)
+                ranked_output = this%dat
+            type is (model_variable_real)
+                ranked_output(:) = this%dat
+            type is (model_variable_int1d)
+                ranked_output = real(this%dat)
+            type is (model_variable_int)
+                ranked_output(:) = real(this%dat)
+            type is (model_variable_char1d)
+                do i = 1, size(ranked_output)
+                    read(this%dat(i), *, iostat = ierr) ranked_output(i)
+                    if (ierr /= 0) error_status = 1
+                end do
+            type is (model_variable_char)
+                if (size(ranked_output) > 0) then
+                    read(this%dat, *, iostat = ierr) ranked_output(i)
+                    if (ierr /= 0) then
+                        error_status = 1
+                    else
+                        ranked_output(:) = ranked_output(1)
+                    end if
+                end if
+        end select
+
+        !> Check for errors.
+        if (all(ranked_output == huge(ranked_output))) error_status = 1
+
+    end subroutine
+
+!-    subroutine assign_tile_values_real_pntr(input_field, ranked_output_pntr, error_status)
+
+        !> Modules.
+!-        use model_variables, only: vs
+
+        !> Input/output variables.
+!-        type(io_field), intent(in) :: input_field
+!-        real, dimension(:), pointer :: ranked_output_pntr
+!-        integer, intent(out) :: error_status
+
+        !> Local variables.
+!-        integer i, ierr
+
+        !> Return status.
+!-        error_status = 0
+
+        !> Reset variable.
+!-        if (.not. associated(ranked_output_pntr)) allocate(ranked_output_pntr(vs%tile%dim_length))
+!-        ranked_output_pntr = huge(ranked_output_pntr)
+
+        !> Assign 'cell' value from field.
+!-        select type (this => input_field%mapping%mapped_to_tile)
+!-            type is (model_variable_real1d)
+!-                ranked_output_pntr = this%dat
+!-            type is (model_variable_real)
+!-                ranked_output_pntr(:) = this%dat
+!-            type is (model_variable_int1d)
+!-                ranked_output_pntr = real(this%dat)
+!-            type is (model_variable_int)
+!-                ranked_output_pntr(:) = real(this%dat)
+!-            type is (model_variable_char1d)
+!-                do i = 1, size(ranked_output_pntr)
+!-                    read(this%dat(i), *, iostat = ierr) ranked_output_pntr(i)
+!-                    if (ierr /= 0) error_status = 1
+!-                end do
+!-            type is (model_variable_char)
+!-                if (size(ranked_output_pntr) > 0) then
+!-                    read(this%dat, *, iostat = ierr) ranked_output_pntr(i)
+!-                    if (ierr /= 0) then
+!-                        error_status = 1
+!-                    else
+!-                        ranked_output_pntr(:) = ranked_output_pntr(1)
+!-                    end if
+!-                end if
+!-        end select
+
+        !> Check for errors.
+!-        if (all(ranked_output_pntr == huge(ranked_output_pntr))) error_status = 1
+
+!-    end subroutine
+
+    subroutine assign_tile_values_int(input_field, ranked_output, error_status)
+
+        !> Modules.
+        use model_variables, only: vs
+
+        !> Input/output variables.
+        type(io_field), intent(in) :: input_field
+        integer, dimension(:), allocatable :: ranked_output
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        integer i, ierr
+
+        !> Return status.
+        error_status = 0
+
+        !> Reset variable.
+        if (.not. allocated(ranked_output)) allocate(ranked_output(vs%tile%dim_length))
+        ranked_output = huge(ranked_output)
+
+        !> Assign 'cell' value from field.
+        select type (this => input_field%mapping%mapped_to_tile)
+            type is (model_variable_real1d)
+                ranked_output = int(this%dat)
+            type is (model_variable_real)
+                ranked_output(:) = int(this%dat)
+            type is (model_variable_int1d)
+                ranked_output = this%dat
+            type is (model_variable_int)
+                ranked_output(:) = this%dat
+            type is (model_variable_char1d)
+                do i = 1, size(ranked_output)
+                    read(this%dat(i), *, iostat = ierr) ranked_output(i)
+                    if (ierr /= 0) error_status = 1
+                end do
+            type is (model_variable_char)
+                if (size(ranked_output) > 0) then
+                    read(this%dat, *, iostat = ierr) ranked_output(i)
+                    if (ierr /= 0) then
+                        error_status = 1
+                    else
+                        ranked_output(:) = ranked_output(1)
+                    end if
+                end if
+        end select
+
+        !> Check for errors.
+        if (all(ranked_output == huge(ranked_output))) error_status = 1
+
+    end subroutine
+
+!-    subroutine assign_tile_values_int_pntr(input_field, ranked_output_pntr, error_status)
+
+        !> Modules.
+!-        use model_variables, only: vs
+
+        !> Input/output variables.
+!-        type(io_field), intent(in) :: input_field
+!-        integer, dimension(:), pointer :: ranked_output_pntr
+!-        integer, intent(out) :: error_status
+
+        !> Local variables.
+!-        integer i, ierr
+
+        !> Return status.
+!-        error_status = 0
+
+        !> Reset variable.
+!-        if (.not. associated(ranked_output_pntr)) allocate(ranked_output_pntr(vs%tile%dim_length))
+!-        ranked_output_pntr = huge(ranked_output_pntr)
+
+        !> Assign 'cell' value from field.
+!-        select type (this => input_field%mapping%mapped_to_tile)
+!-            type is (model_variable_real1d)
+!-                ranked_output_pntr = int(this%dat)
+!-            type is (model_variable_real)
+!-                ranked_output_pntr(:) = int(this%dat)
+!-            type is (model_variable_int1d)
+!-                ranked_output_pntr = this%dat
+!-            type is (model_variable_int)
+!-                ranked_output_pntr(:) = this%dat
+!-            type is (model_variable_char1d)
+!-                do i = 1, size(ranked_output_pntr)
+!-                    read(this%dat(i), *, iostat = ierr) ranked_output_pntr(i)
+!-                    if (ierr /= 0) error_status = 1
+!-                end do
+!-            type is (model_variable_char)
+!-                if (size(ranked_output_pntr) > 0) then
+!-                    read(this%dat, *, iostat = ierr) ranked_output_pntr(i)
+!-                    if (ierr /= 0) then
+!-                        error_status = 1
+!-                    else
+!-                        ranked_output_pntr(:) = ranked_output_pntr(1)
+!-                    end if
+!-                end if
+!-        end select
+
+        !> Check for errors.
+!-        if (all(ranked_output_pntr == huge(ranked_output_pntr))) error_status = 1
+
+!-    end subroutine
+
+    subroutine assign_variable_from_field(input_field, error_status)
+
+        !> Modules.
+!-        use strings, only: uppercase
+!-        use variable_names
+        use model_variables, only: vs
+        use variable_maps
+
+        !> Input/output variables.
+        !*  input_field: Input field to update.
+        !*  error_status: Status returned by the operation (optional; 0: normal).
+        type(io_field) input_field
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        integer ierr
+        logical variable_assigned, lsaved
+!-        integer time_order, isaved
+
+        !> Return status.
+        error_status = 0
+
+        !> Transfer the time order to a local variable (for diagnostic output).
+!-        time_order = 0
+!-        if (allocated(input_field%dim_names)) then
+!-            time_order = input_field%mapping%time_order
+!-        end if
+
+        !> Identify and assign variables.
+!-        isaved = 1
+!-        select case (uppercase(input_field%field_name))
+
+            !> Basin attributes (general).
+!-            case (VN_NEXT)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%next_id, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%next_id, error_status)
+!-            case (VN_GRIDAREA)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%surface_area, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%surface_area, error_status)
+!-            case (VN_ELEV)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%topo_elev, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%topo_elev, error_status)
+!-            case (VN_TOPOSLOPE, 'INTSLOPE')
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%topo_slope, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%topo_slope, error_status)
+
+            !> Drainage/routing attributes.
+!-            case (VN_CHNLSLOPE)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%chnl_slope, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%chnl_slope, error_status)
+!-            case (VN_CHNLLENGTH)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%chnl_length, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%chnl_length, error_status)
+!-            case (VN_ICHNL, 'CHNL')
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%ichnl, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%ichnl, error_status)
+!-            case (VN_IREACH, 'REACH')
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%ireach, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%ireach, error_status)
+!-            case (VN_DA)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%drainage_area, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%drainage_area, error_status)
+!-            case (VN_BNKFLL, 'BANKFULL')
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%bankfull, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%bankfull, error_status)
+
+            !> Meteorology/climatology variables.
+!-            case (VN_FSIN)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%fsin, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%fsin, error_status)
+!-            case (VN_FLIN)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%flin, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%flin, error_status)
+!-            case (VN_TA)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%ta, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%ta, error_status)
+!-            case (VN_QA)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%qa, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%qa, error_status)
+!-            case (VN_PRES)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%pres, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%pres, error_status)
+!-            case (VN_UU)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%uu, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%uu, error_status)
+!-            case (VN_VV)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%vv, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%vv, error_status)
+!-            case (VN_UV)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%uv, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%uv, error_status)
+!-            case (VN_WDIR)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%wdir, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%wdir, error_status)
+!-            case (VN_PRERN)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%prern, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%prern, error_status)
+!-            case (VN_PRESNO)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%presno, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%presno, error_status)
+!-            case (VN_PRE)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%pre, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%pre, error_status)
+
+            !> Groundwater/lower zone storage variables.
+!-            case (VN_RCHG)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%rchg, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%rchg, error_status)
+
+            !> Routing variables.
+!-            case (VN_RFF)
+!-                if (associated(vs%grid)) call assign_cell_values(input_field, vs%grid%rff, error_status)
+!-                if (associated(vs%tile)) call assign_tile_values(input_field, vs%tile%rff, error_status)
+
+            !> Others (not saved).
+!-            case default
+!-                isaved = 0
+!-        end select
+
+        !> Assign field.
+        variable_assigned = .false.
+        if (associated(vs%grid) .and. allocated(input_field%mapping%mapped_to_cell)) then
+            call model_variable_assign_mapped_field_from_name( &
+                vs%grid, input_field%mapping%mapped_to_cell, input_field%field_name, &
+                variable_assigned = lsaved, error_status = ierr)
+            if (ierr /= 0) then
+                call print_error( &
+                    "An error occurred assigning the 'grid' instance of the '" // trim(input_field%label) // "' variable.")
+                error_status = ierr
+            else
+                if (lsaved) variable_assigned = lsaved
+            end if
+        end if
+        if (associated(vs%tile) .and. allocated(input_field%mapping%mapped_to_tile)) then
+            call model_variable_assign_mapped_field_from_name( &
+                vs%tile, input_field%mapping%mapped_to_tile, input_field%field_name, &
+                variable_assigned = lsaved, error_status = ierr)
+            if (ierr /= 0) then
+                call print_error( &
+                    "An error occurred assigning the 'tile' instance of the '" // trim(input_field%label) // "' variable.")
+                error_status = ierr
+            else
+                if (lsaved) variable_assigned = lsaved
+            end if
+        end if
+
+        !> Check 'isaved' status.
+        if (variable_assigned .and. input_field%mapping%time_order == 0) then
+            call print_info("Assigned the variable '" // trim(input_field%label) // "'.")
+        end if
+
+    end subroutine
+
+    subroutine assign_variables_from_field_list(field_list, error_status)
+
+        !> Input/output variables.
+        !*  field_list: List of fields (read from file).
+        !*  error_status: Status returned by the operation (optional; 0: normal).
+        type(io_field), dimension(:), intent(in) :: field_list
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        integer i, ierr
+
+        !> Status.
+        error_status = 0
+
+        !> Loop through the fields to assign remaining variables.
+        ierr = 0
+        do i = 1, size(field_list)
+            call assign_variable_from_field(field_list(i), ierr)
+            if (ierr /= 0) error_status = ierr
+        end do
+
+    end subroutine
+
+    subroutine assign_variable_from_list_by_name( &
+        field_list, variable_name, output_field, dim_name, level_id, default_value, error_status)
+
+        !> Modules.
+        use strings, only: uppercase
+        use model_variables, only: vs
+
+        !> Input/output variables.
+        type(io_field), intent(in) :: field_list(:)
+        character(len = *), intent(in) :: variable_name
+        real, allocatable :: output_field(:)
+        character(len = *), intent(in) :: dim_name
+        integer, intent(in), optional :: level_id
+        real, intent(in), optional :: default_value
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        integer i
+
+        !> Return status.
+        error_status = 0
+
+        !> Allocate unallocated output field.
+        if (.not. allocated(output_field)) then
+            select case (dim_name)
+                case (DIM_NAME_CELL)
+                    if (associated(vs%grid)) allocate(output_field(vs%grid%dim_length))
+                case (DIM_NAME_LANDTILE)
+                    if (associated(vs%tile)) allocate(output_field(vs%tile%dim_length))
+                case (DIM_NAME_GRU)
+                    if (associated(vs%tile)) then
+                        if (allocated(vs%tile%from_gru)) allocate(output_field(maxval(vs%tile%from_gru)))
+                    end if
+                case (DIM_NAME_RIVERCLASS)
+                    if (associated(vs%grid)) then
+                        if (allocated(vs%grid%from_riverclass)) allocate(output_field(maxval(vs%grid%from_riverclass)))
+                    end if
+                case (DIM_NAME_SOIL)
+
+                case default
+                    call print_error("Unknown dimension name to allocate the '" // trim(variable_name) // "' variable.")
+                    error_status = 1
+            end select
+
+            !> Check the field was allocated.
+            if (.not. allocated(output_field)) then
+                call print_error( &
+                    "A necessary dimension '" // trim(dim_name) // "' is not defined to allocate the '" // trim(variable_name) &
+                    // "' variable.")
+                error_status = 1
+            end if
+        end if
+        if (error_status /= 0) return
+
+        !> Assign background field.
+        if (present(default_value)) then
+            output_field = default_value
+        else
+            output_field = NO_DATA_REAL
+        end if
+
+        !> Find field.
+        do i = 1, size(field_list)
+            if (allocated(field_list(i)%field) .and. uppercase(field_list(i)%field_name) == uppercase(variable_name)) then
+
+                !> Assign field.
+                call assign_field(field_list(i)%field, output_field, error_status)
+                exit
+            end if
+        end do
+
+    end subroutine
+
+    subroutine create_output_file(output_file, quiet, error_status)
+
+        !> Input/output variables.
+        !*  output_file: Output file containing field definitions.
+        !*  quiet: .true. to suppress block formatting (optional, default: .false.).
+        !*  error_status: Status returned by the operation (optional; 0: normal).
+        type(io_file), intent(in) :: output_file
+        logical, intent(in), optional :: quiet
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        logical v, ltest
+
+        !> Check verbosity (override if 'DIAGNOSEMODE' is enabled).
+        v = .true.
+        if (present(quiet)) v = .not. quiet
+        if (DIAGNOSEMODE) v = .true.
+
+        !> Check for a valid path.
+        if (len_trim(output_file%full_path) == 0) then
+            if (v) call print_error("Missing file name in 'open_input_file'. Unable to open file.")
+            error_status = 1
+            return
+        else
+
+            !> Print a message (if not quiet).
+            error_status = 0
+            if (v) then
+                call reset_tab()
+                call print_message("SAVING: " // trim(output_file%full_path))
+                call increase_tab()
+            end if
+        end if
+
+        !> Check compatibility.
+        ltest = .true.
+
+    end subroutine
+
+    subroutine append_output_frame(output_file, quiet, error_status)
+
+        !> Input/output variables.
+        !*  output_file: Output file containing field definitions, already associated with an output unit.
+        !*  quiet: .true. to suppress block formatting (optional, default: .false.).
+        !*  error_status: Status returned by the operation (optional; 0: normal).
+        type(io_file), intent(in) :: output_file
+        logical, intent(in), optional :: quiet
+        integer, intent(out) :: error_status
+
+        !> Local variables.
+        logical v
+
+        !> Return status.
+        error_status = 0
+
+        !> Check verbosity (override if 'DIAGNOSEMODE' is enabled).
+        v = .true.
+        if (present(quiet)) v = .not. quiet
+        if (DIAGNOSEMODE) v = .true.
+
+    end subroutine
+
+end module

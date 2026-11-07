@@ -1,0 +1,193 @@
+&joboptions
+
+! Model grid description
+    projectedGrid = .false. ! True if you have a projected lon lat grid, false if not. Projected grids
+                            ! can only have regions referenced by the indexes, not coordinates, when 
+                            ! running a sub-region
+
+! Meteorological options:
+    readMetStartYear = 1850  ! First year of meteorological forcing to read in from the met file
+    readMetEndYear = 1851    ! Last year of meteorological forcing to read in from the met file
+    metLoop = 1 ,            ! no. of times to cycle over the read-in meteorology
+    leap = .false. ,         ! True if your meteorological forcing includes leap years
+
+    ! Meteorological forcing files:
+        metFileFss = '/space/hall1/sitestore/eccc/crd/ccrp/scrd530/classic_inputs/meteorology/global/CRUJRAv2/dswrf_v2_T63_1700_2018.nc',        !< location of the incoming shortwave radiation meteorology file
+        metFileFdl = '/space/hall1/sitestore/eccc/crd/ccrp/scrd530/classic_inputs/meteorology/global/CRUJRAv2/dlwrf_v2_T63_1700_2018.nc',        !< location of the incoming longwave radiation meteorology file
+        metFilePre = '/space/hall1/sitestore/eccc/crd/ccrp/scrd530/classic_inputs/meteorology/global/CRUJRAv2/pre_v2_T63_1700_2018.nc',        !< location of the precipitation meteorology file
+        metFileTa = '/space/hall1/sitestore/eccc/crd/ccrp/scrd530/classic_inputs/meteorology/global/CRUJRAv2/tmp_v2_T63_1700_2018.nc',         !< location of the air temperature meteorology file
+        metFileQa = '/space/hall1/sitestore/eccc/crd/ccrp/scrd530/classic_inputs/meteorology/global/CRUJRAv2/spfh_v2_T63_1700_2018.nc',         !< location of the specific humidity meteorology file
+        metFileUv = '/space/hall1/sitestore/eccc/crd/ccrp/scrd530/classic_inputs/meteorology/global/CRUJRAv2/wind_v2_T63_1700_2018.nc',         !< location of the wind speed meteorology file
+        metFilePres = '/space/hall1/sitestore/eccc/crd/ccrp/scrd530/classic_inputs/meteorology/global/CRUJRAv2/pres_v2_T63_1700_2018.nc',       !< location of the atmospheric pressure meteorology file
+
+! Initialization and restart files
+    init_file = '/space/hall1/sitestore/eccc/crd/ccrp/scrd530/classic_checksums/input_files/initFile_CLASSIC_v1.0.nc' ,     !< location of the model initialization file
+    rs_file_to_overwrite = '/space/hall1/sitestore/eccc/crd/ccrp/scrd530/classic_checksums/input_files/rsfile.nc' ,      ! location of the existing netcdf file that will be 
+                                              ! **overwritten** for the restart file typically here you
+                                              !  will just copy the init_file and rename it so it can be
+                                              ! overwritten.
+! Namelist of model parameters
+    runparams_file = '/fs/home/fs1/eccc/crd/ccrn_shr/scrd108/builds/51d31566/1/CLASSIC_development/CLASSIC/configurationFiles/template_run_parameters.txt' ,    ! location of the namelist file containing the model parameters
+
+! CTEM (biogeochemistry) switches:
+ ctem_on = .false. ,     ! set this to true for using ctem simulated dynamic lai and canopy mass, else class simulated specified
+                        ! lai and canopy mass are used. with this switch on, all the main ctem subroutines are run.
+    spinfast = 1 ,      ! Set this to a higher number up to 10 to spin up soil carbon pool faster. Set to 1 for final
+                        ! round of spin up and transient runs. Setting to 1 also causes the calling of the balcar subroutine.
+                        ! Balcar checks for conservation of carbon.
+    
+    ! Model tracer 
+        useTracer = 0 ,     ! **NOT OPERATIONAL -> keep useTracer = 0.
+                            ! useTracer = 0, the tracer code is not used. 
+                            ! useTracer = 1 turns on a simple tracer that tracks pools and fluxes. The simple tracer then requires that the 
+                            !               tracer values in the init_file and the tracerCO2file are set to meaningful values for the experiment being run.                         
+                            ! useTracer = 2 [Not implemented yet] means the tracer is 14C and will then call a 14C decay scheme. 
+                            ! useTracer = 3 [Not implemented yet] means the tracer is 13C and will then call a 13C fractionation scheme. 
+        tracerCO2file = ''  ! Tracer CO2 file, this file needs to be correctly chosen for the useTracer option. It uses the transientCO2 
+                            ! and fixedYearCO2 switches to determine how it is read in.
+
+    !CO2 switches:
+        transientCO2 = .false. , ! Read in time varying CO2 concentration from CO2File or if set to false then use only the year of fixedYearCO2 value
+        CO2File = '/space/hall1/sitestore/eccc/crd/ccrp/scrd530/classic_inputs/CO2/TRENDY_CO2_1700_2017_for_GCP_2018.nc' ,
+        fixedYearCO2 = 1850 ,   ! If transientCO2 = .true., this is ignored.
+
+    !CH4 switches:
+    
+        doMethane = .false., ! If set to .true., a methane file should be specified below.
+
+          ! Read in of atmospheric methane concentration for soil CH4 uptake. 
+          transientCH4 = .false. , ! Read in time varying CH4 concentration from CH4File or if set to false then use only the year of fixedYearCH4 value
+          CH4File = '/space/hall1/sitestore/eccc/crd/ccrp/scrd530/classic_inputs/CH4/CH4_1700_2017_for_GCP_2018.nc',
+          fixedYearCH4 = 1850 ,   !If transientCH4 = .true., this is ignored.
+
+          ! Wetland switches:
+              ! If you wish to read in and use observed wetland fractions, there are two options. If you wish time
+              ! evolving wetland fractions set transientOBSWETF to true and give a OBSWETFFile. If you wish to use
+              ! a single year of that file set transientOBSWETF to false, give a OBSWETFFile, and set fixedYearOBSWETF
+              ! to some valid year. If you wish to use only dynamically determined wetland fractions set transientOBSWETF
+              ! to false and set fixedYearOBSWETF to -9999. The slope fractions in the init_file will then be used to
+              ! dynamically determine wetland extent.
+              transientOBSWETF = .true. ,  ! use observed wetland fraction time series, otherwise use fixedYearOBSWETF
+              OBSWETFFile = '/space/hall1/sitestore/eccc/crd/ccrp/scrd530/classic_inputs/wetland/global/gcp-ch4_wetlands_1838-2017_t63_final_daily.nc',             ! Location of the netcdf file containing observed wetland fraction
+              fixedYearOBSWETF = -9999 ,    ! set the year to use for observed wetland fraction if transientOBSWETF is false.
+
+    !Fire switches
+        dofire = .false. ,               ! If true the fire disturbance parameterization is turned on.
+
+            transientPOPD = .true. ,    ! Read in time varying population density from POPDFile or if set to false then use only the year of fixedYearPOPD.
+            POPDFile = '/space/hall1/sitestore/eccc/crd/ccrp/scrd530/classic_inputs/population/global/POPD_annual_1700_2017_T63_chunked.nc' ,
+            fixedYearPOPD = 1850 ,      ! If transientPOPD = .true., this is ignored.
+
+            transientLGHT= .true.      !use lightning strike time series, otherwise use fixedYearLGHT
+            LGHTFile = '/space/hall1/sitestore/eccc/crd/ccrp/scrd530/classic_inputs/lightning/global/lisotd_1995_2014_climtlgl_lghtng_as_ts_1850_2050_chunked.nc' , ! Location of the netcdf file containing lightning strike values
+            fixedYearLGHT = 1850 ,    ! set the year to use for lightning strikes if transientLGHT is false.
+
+    ! Competition switches:
+        PFTCompetition = .false. ,      ! If true, competition between PFTs for space on a grid cell is implimented
+            inibioclim = .false. ,      ! set this to true if competition between pfts is to be implimented and you have the mean climate values
+                                        ! in the init netcdf file.
+            start_bare = .false.,       ! Set this to true if competition is true, and if you wish to start from bare ground. if this is set to false, the
+                                        ! init netcdf file info will be used to set up the run. NOTE: This still keeps the crop fractions
+                                        ! (while setting all pools to zero)
+
+    ! Land Use switches:
+        ! If you wish to use your own PFT fractional covers (specified in the init_file), set fixedYearLUC to -9999, otherwise set it
+        ! to the year of land cover you want to use. If you wish to have transient land cover changes, set
+        ! lnduseon to true, it will update the fractional coverages from LUCFile. When lnduseon is false it is
+        ! not updated beyond the initial read in of landcover for fixedYearLUC, or if -9999 then the LUCFile is
+        ! not used at all.
+        lnduseon = .false. ,
+        LUCFile = '/space/hall1/sitestore/eccc/crd/ccrp/scrd530/classic_inputs/landcover/global/LUH_HYDE_based_crop_area_adjusted_land_cover_CTEM_fractions_1850_2017_T63_chunked.nc' ,
+        fixedYearLUC = -9999 ,
+
+! Physics switches:
+
+    IDISP = 0 ,   !  This switch controls the calculation of the vegetation displacement height. In most
+                  !atmospheric models a “terrain-following” coordinate system is used, in which the vegetation
+                  !displacement height is considered to be part of the “terrain”, and is therefore neglected. 
+                  ! For such applications IDISP is set to 0. For studies making use of field data, it should be set to 1.
+    IZREF = 2 ,   !This switch indicates where the bottom of the atmosphere is conceptually located. In
+                  !most atmospheric models the bottom is assumed to lie at the local surface roughness length, 
+                  ! i.e. where the horizontal wind speed is zero; for such simulations IZREF is set to 2. For 
+                  ! all other cases, including sites using field data, it should be set to 1.
+    ZRFH = 40.0,  ! The reference heights at which the energy variables (air temperature and specific humidity) are provided. When 
+                  ! using field data this is the measurement height. 
+    ZRFM = 40.0,  ! The reference heights at which the momentum variables (wind speed) are provided. When using field data this is the measurement height. 
+    ZBLD = 50.0,  ! The atmospheric blending height.  Technically this variable depends on the length scale of the
+                  ! patches of roughness elements on the land surface, but this is difficult to ascertain.  Usually it is assigned a value of 50 m.
+    ISLFD = 0 ,   ! This switch indicates which surface layer flux stability
+                  ! correction and screen-level diagnostic subroutines are to be
+                  ! used. If ISLFD=0, the CCCma stability correction subroutine
+                  ! DRCOEF is used with simple similarity-based screen-level
+                  ! diagnostic calculations. If ISLFD=1, DRCOEF is used for the
+                  ! stability corrections and the RPN subroutine SLDIAG is used
+                  ! for the screen level diagnostic calculations. If ISLFD=2, the
+                  ! RPN stability correction subroutine FLXSURFZ is used with the
+                  ! companion RPN subroutine DIASURFZ for the screen level
+                  ! diagnostics. (When running CLASS coupled to an atmospheric 
+                  ! model with staggered vertical thermodynamic and momentum
+                  ! levels, ISLFD must be set to 2, since FLXSURFZ allows inputs
+                  ! on staggered levels and DRCOEF does not.)
+    IPCP = 1 ,    ! if ipcp=1, the rainfall-snowfall cutoff is taken to lie at 0 C. if ipcp=2, a linear partitioning of precipitation between
+                  ! rainfall and snowfall is done between 0 C and 2 C. if ipcp=3, rainfall and snowfall are partitioned according to
+                  ! a polynomial curve between 0 C and 6 C.
+    IWF = 0 ,     ! if iwf=0, only overland flow and baseflow are modelled, and the ground surface slope is not modelled. if iwf=n (0<n<4),
+                  ! the watflood calculations of overland flow and interflow are performed; interflow is drawn from the top n soil layers.
+    isnoalb = 0 , ! if isnoalb is set to 0, the original two-band snow albedo algorithms are used. 
+                  ! if it is set to 1, the new four-band routines are used. 
+                  ! At present, the four band algorithm should NOT be used offline.
+
+ ! Iteration scheme
+    ! ITC, ITCG and ITG are switches to choose the iteration scheme to be used in calculating the canopy or ground surface temperature
+    ! respectively.  if the switch is set to 1, a bisection method is used; if to 2, the newton-raphson method is used. (Note: Recently
+    ! problems have been discovered with the Newton-Raphson scheme, involving instabilities and occasional failure to converge, so 
+    ! currently users are advised not to select this option.)
+
+    ITC = 1 ,   ! Canopy
+    ITCG = 1 ,  ! Ground under canopy
+    ITG = 1 ,   ! Ground
+
+ ! User-supplied values:
+    ! if ipai, ihgt, ialc, ials and ialg are zero, the values of plant area index, vegetation height, canopy albedo, snow albedo
+    ! and soil albedo respectively calculated by class are used. if any of these switches is set to 1, the value of the
+    ! corresponding parameter calculated by class is overridden by a user-supplied input value.
+    IPAI = 0 ,  ! Plant area index
+    IHGT = 0 ,  ! Vegetation height
+    IALC = 0 ,  ! Canopy albedo
+    IALS = 0 ,  ! Snow albedo
+    IALG = 0 ,  ! Soil albedo
+
+! Output options:
+
+    output_directory = '/space/hall1/sitestore/eccc/crd/ccrp/scrd530/classic_checksums/ctem_off' ,        !< Directory where the output netcdfs will be placed
+    xmlFile = '/fs/home/fs1/eccc/crd/ccrn_shr/scrd108/builds/51d31566/1/CLASSIC_development/CLASSIC/configurationFiles/outputVariableDescriptors.xml' ,  !< location of the xml file that outlines the possible netcdf output files
+
+    doperpftoutput = .false. ,   ! Switch for making extra output files that are at the per PFT level
+    dopertileoutput = .false. , ! Switch for making extra output files that are at the per tile level
+
+    dohhoutput = .false. ,      ! Switch for making half hourly output files 
+    JHHSTD = 166 ,                ! day of the year to start writing the half-hourly output
+    JHHENDD = 185 ,             ! day of the year to stop writing the half-hourly output
+    JHHSTY = 1901 ,             ! simulation year (iyear) to start writing the half-hourly output
+    JHHENDY = 1901 ,            ! simulation year (iyear) to stop writing the half-hourly output
+
+    dodayoutput = .false. ,     ! Switch for making daily output files 
+    JDSTD = 20 ,                 ! day of the year to start writing the daily output
+    JDENDD = 30 ,              ! day of the year to stop writing the daily output
+    JDSTY = 1902 ,              ! simulation year (iyear) to start writing the daily output
+    JDENDY = 1903 ,             ! simulation year (iyear) to stop writing the daily output
+
+    domonthoutput = .false. ,    ! Switch for making monthly output files 
+    JMOSTY = 1860 ,             ! Year to start writing out the monthly output files.
+    
+    doAnnualOutput = .false. ,   ! Switch for making annual output files 
+
+    doChecksums = .true.,      ! checksums can be generated if you wish to ensure you are making no
+                                ! functional changes to the model results. See the CLASSIC documentation and
+                                ! the regression_testing tool.
+    
+    Comment = ' test '          ! Comment about the run that will be written to the output netcdfs
+
+ /
+
+This area can be used for comments about the run.

@@ -1,0 +1,15 @@
+
+!class
+!ZPLG 0.1
+!ZPLS 0.1
+!ZSNL 0.1
+
+!ctem
+CO2 396
+
+!wf_route
+!WF_R2 1.362
+
+!rte
+R2N 0.02 !0.1362
+R1N 0.035 !0.2724

@@ -1,0 +1,765 @@
+netcdf CA-TPD_init {
+dimensions:
+	gru = 1 ;
+	lat = 1 ;
+	lon = 1 ;
+	icp1 = 5 ;
+	layer = 3 ;
+	ic = 4 ;
+	icctem = 9 ;
+	iccp2 = 11 ;
+	slope = 8 ;
+variables:
+	double ALBS(gru, lat, lon) ;
+		ALBS:_FillValue = -999. ;
+		ALBS:units = "-" ;
+		ALBS:long_name = "Soil drainage index" ;
+	double ALIC(gru, icp1, lat, lon) ;
+		ALIC:_FillValue = -999. ;
+		ALIC:units = "-" ;
+		ALIC:long_name = "Average near-IR albedo of vegetation category when fully-leafed" ;
+	double ALVC(gru, icp1, lat, lon) ;
+		ALVC:_FillValue = -999. ;
+		ALVC:units = "-" ;
+		ALVC:long_name = "Average visible albedo of vegetation category when fully-leafed" ;
+	double CLAY(gru, layer, lat, lon) ;
+		CLAY:_FillValue = NaN ;
+		CLAY:units = "%" ;
+		CLAY:long_name = "Percentage clay content" ;
+	double CMAS(gru, ic, lat, lon) ;
+		CMAS:_FillValue = -999. ;
+		CMAS:units = "$[kg m^{-2} ]$" ;
+		CMAS:long_name = "Annual maximum canopy mass for vegetation category" ;
+	double Cmossmas(gru, lat, lon) ;
+		Cmossmas:_FillValue = -999. ;
+		Cmossmas:units = "kgC/m2" ;
+		Cmossmas:long_name = "C in moss biomass" ;
+	double DELZ(layer) ;
+		DELZ:_FillValue = NaN ;
+		DELZ:units = "m" ;
+		DELZ:long_name = "Ground layer thickness" ;
+	double DRN(gru, lat, lon) ;
+		DRN:_FillValue = -999. ;
+		DRN:units = "-" ;
+		DRN:long_name = "Soil drainage index" ;
+	double FARE(gru, lat, lon) ;
+		FARE:_FillValue = -999. ;
+		FARE:units = "fraction" ;
+		FARE:long_name = "gru fractional area of gridcell" ;
+	double FCAN(gru, icp1, lat, lon) ;
+		FCAN:_FillValue = -999. ;
+		FCAN:units = "-" ;
+		FCAN:long_name = "Annual maximum fractional coverage of modelled area (read in for CLASS only runs)" ;
+	double GC(lat, lon) ;
+		GC:_FillValue = -999. ;
+		GC:units = "-" ;
+		GC:long_name = "GCM surface descriptor - land surfaces (inc. inland water) is -1" ;
+	double GRO(gru, lat, lon) ;
+		GRO:_FillValue = -999. ;
+		GRO:units = "-" ;
+		GRO:long_name = "Vegetation growth index" ;
+	double LNZ0(gru, icp1, lat, lon) ;
+		LNZ0:_FillValue = -999. ;
+		LNZ0:units = "-" ;
+		LNZ0:long_name = "Natural logarithm of maximum vegetation roughness length" ;
+	double MID(lat, lon) ;
+		MID:_FillValue = -999. ;
+		MID:units = "-" ;
+		MID:long_name = "Mosaic gru type identifier (1 for land surface, 0 for inland lake)" ;
+	double ORGM(gru, layer, lat, lon) ;
+		ORGM:_FillValue = NaN ;
+		ORGM:units = "%" ;
+		ORGM:long_name = "Percentage organic matter content" ;
+	double PAMN(gru, ic, lat, lon) ;
+		PAMN:_FillValue = -999. ;
+		PAMN:units = "m2/m2" ;
+		PAMN:long_name = "Annual minimum plant area index of vegetation category" ;
+	double PAMX(gru, ic, lat, lon) ;
+		PAMX:_FillValue = -999. ;
+		PAMX:units = "m2/m2" ;
+		PAMX:long_name = "Annual maximum plant area index of vegetation category" ;
+	double RCAN(gru, lat, lon) ;
+		RCAN:_FillValue = -999. ;
+		RCAN:units = "-" ;
+		RCAN:long_name = "Intercepted liquid water stored on canopy" ;
+	double RHOS(gru, lat, lon) ;
+		RHOS:_FillValue = -999. ;
+		RHOS:units = "kg/m3" ;
+		RHOS:long_name = "Density of snow" ;
+	double ROOT(gru, ic, lat, lon) ;
+		ROOT:_FillValue = -999. ;
+		ROOT:units = "m" ;
+		ROOT:long_name = "Annual maximum rooting depth of vegetation category" ;
+	double SAND(gru, layer, lat, lon) ;
+		SAND:_FillValue = NaN ;
+		SAND:units = "%" ;
+		SAND:long_name = "Percentage sand content" ;
+	double SCAN(gru, lat, lon) ;
+		SCAN:_FillValue = -999. ;
+		SCAN:units = "kg/m2" ;
+		SCAN:long_name = "Intercepted frozen water stored on canopy" ;
+	double SDEP(gru, lat, lon) ;
+		SDEP:_FillValue = -999. ;
+		SDEP:units = "m" ;
+		SDEP:long_name = "Soil permeable depth" ;
+	double SNO(gru, lat, lon) ;
+		SNO:_FillValue = -999. ;
+		SNO:units = "kg/m2" ;
+		SNO:long_name = "Mass of snow pack" ;
+	double SOCI(gru, lat, lon) ;
+		SOCI:_FillValue = -999. ;
+		SOCI:units = "index" ;
+		SOCI:long_name = "Soil colour index" ;
+	double TBAR(gru, layer, lat, lon) ;
+		TBAR:_FillValue = NaN ;
+		TBAR:units = "C" ;
+		TBAR:long_name = "Temperature of soil layers" ;
+	double TCAN(gru, lat, lon) ;
+		TCAN:_FillValue = -999. ;
+		TCAN:units = "C" ;
+		TCAN:long_name = "Vegetation canopy temperature" ;
+	double THIC(gru, layer, lat, lon) ;
+		THIC:_FillValue = NaN ;
+		THIC:units = "m3/m3" ;
+		THIC:long_name = "Volumetric frozen water content of soil layers" ;
+	double THLQ(gru, layer, lat, lon) ;
+		THLQ:_FillValue = NaN ;
+		THLQ:units = "m3/m3" ;
+		THLQ:long_name = "Volumetric liquid water content of soil layers" ;
+	double TPND(gru, lat, lon) ;
+		TPND:_FillValue = -999. ;
+		TPND:units = "C" ;
+		TPND:long_name = "Temperature of ponded water" ;
+	double TSNO(gru, lat, lon) ;
+		TSNO:_FillValue = -999. ;
+		TSNO:units = "C" ;
+		TSNO:long_name = "Snowpack temperature" ;
+	double ZPND(gru, lat, lon) ;
+		ZPND:_FillValue = -999. ;
+		ZPND:units = "m" ;
+		ZPND:long_name = "Depth of ponded water on surface" ;
+	double bleafmas(gru, icctem, lat, lon) ;
+		bleafmas:_FillValue = -999. ;
+		bleafmas:units = "kgC/m2" ;
+		bleafmas:long_name = "Brown leaf mass" ;
+	double dmoss(gru, lat, lon) ;
+		dmoss:_FillValue = -999. ;
+		dmoss:units = "m" ;
+		dmoss:long_name = "Depth of living moss" ;
+	double fcancmx(gru, icctem, lat, lon) ;
+		fcancmx:_FillValue = -999. ;
+		fcancmx:units = "-" ;
+		fcancmx:long_name = "PFT fractional coverage per grid cell" ;
+	double gleafmas(gru, icctem, lat, lon) ;
+		gleafmas:_FillValue = -999. ;
+		gleafmas:units = "kgC/m2" ;
+		gleafmas:long_name = "Green leaf mass" ;
+	double grclarea(lat, lon) ;
+		grclarea:_FillValue = -999. ;
+		grclarea:units = "km2" ;
+		grclarea:long_name = "Area of grid cell" ;
+	int ic(ic) ;
+		ic:standard_name = "physics (CLASS) PFTs" ;
+	int iccp2(iccp2) ;
+		iccp2:standard_name = "biogeochemical (CTEM) PFTs plus bareground and land use change product pools" ;
+	int icctem(icctem) ;
+		icctem:standard_name = "biogeochemical (CTEM) PFTs" ;
+	int icp1(icp1) ;
+		icp1:standard_name = "physics (CLASS) PFTs plus bareground" ;
+	double ipeatland(gru, lat, lon) ;
+		ipeatland:_FillValue = -999. ;
+		ipeatland:units = "-" ;
+		ipeatland:long_name = "Peatland flag: 0 = not a peatland, 1= bog, 2 = fen" ;
+	double lat(lat) ;
+		lat:_FillValue = NaN ;
+		lat:standard_name = "Latitude" ;
+		lat:units = "degrees_north" ;
+		lat:axis = "Y" ;
+	int layer(layer) ;
+		layer:standard_name = "ground layers" ;
+	double lfstatus(gru, icctem, lat, lon) ;
+		lfstatus:_FillValue = -999. ;
+		lfstatus:units = "-" ;
+		lfstatus:long_name = "Leaf status, see Phenology" ;
+	double litrmass(gru, iccp2, lat, lon) ;
+		litrmass:_FillValue = -999. ;
+		litrmass:units = "kgC/m2" ;
+		litrmass:long_name = "Litter mass per soil layer" ;
+	double litrmsmoss(gru, lat, lon) ;
+		litrmsmoss:_FillValue = -999. ;
+		litrmsmoss:units = "kgC/m2" ;
+		litrmsmoss:long_name = "Moss litter mass" ;
+	double lon(lon) ;
+		lon:_FillValue = NaN ;
+		lon:standard_name = "Longitude" ;
+		lon:units = "degrees_east" ;
+		lon:axis = "X" ;
+	double nmtest(lat, lon) ;
+		nmtest:_FillValue = -999. ;
+		nmtest:units = "-" ;
+		nmtest:long_name = "Number of grus in each grid cell" ;
+	double pandays(gru, icctem, lat, lon) ;
+		pandays:_FillValue = -999. ;
+		pandays:units = "-" ;
+		pandays:long_name = "Days with +ve new photosynthesis, see Phenology" ;
+	double rootmass(gru, icctem, lat, lon) ;
+		rootmass:_FillValue = -999. ;
+		rootmass:units = "kgC/m2" ;
+		rootmass:long_name = "Root mass" ;
+	int slope(slope) ;
+		slope:standard_name = "wetland slope fractions for 0.025, 0.05, 0.1, 0.15, 0.20, 0.25, 0.3 and 0.35 percent slope threshold" ;
+	double slopefrac(gru, slope, lat, lon) ;
+		slopefrac:_FillValue = -999. ;
+		slopefrac:units = "-" ;
+		slopefrac:long_name = "Slope-based fraction for dynamic wetlands" ;
+	double soilcmas(gru, iccp2, lat, lon) ;
+		soilcmas:_FillValue = -999. ;
+		soilcmas:units = "kgC/m2" ;
+		soilcmas:long_name = "Soil C mass per soil layer" ;
+	double stemmass(gru, icctem, lat, lon) ;
+		stemmass:_FillValue = -999. ;
+		stemmass:units = "kgC/m2" ;
+		stemmass:long_name = "Stem mass" ;
+	int gru(gru) ;
+		gru:standard_name = "land surface gru" ;
+	double maxAnnualActLyr(gru, lat, lon) ;
+		maxAnnualActLyr:_FillValue = -999. ;
+		maxAnnualActLyr:long_name = "Active layer thickness maximum over the e-folding period specified by parameter eftime" ;
+		maxAnnualActLyr:units = "m" ;
+	double grwtheff(gru, icctem, lat, lon) ;
+		grwtheff:_FillValue = -999. ;
+		grwtheff:long_name = "Growth efficiency. Change in biomass per year per unit max. LAI,for use in mortality subroutine" ;
+		grwtheff:units = "(kg C/m^2)/(m2/m2)" ;
+	float rsmn(ic) ;
+	float qa50(ic) ;
+	float vpda(ic) ;
+	float vpdb(ic) ;
+	float psga(ic) ;
+	float psgb(ic) ;
+	float xslp(ic) ;
+	float xdrainh(gru) ;
+	float mann(gru) ;
+	float ksat(gru) ;
+
+// global attributes:
+		:title = "CLASSIC initialization file created from: /home/acrp001/mattFortier2019/code/temp/CA-TPD.INI" ;
+		:creation_date = "20190523" ;
+		:history = "Wed Jun 12 17:19:01 2019: ncks -4 ./rsfile.nc ./rsfile.nc" ;
+		:NCO = "4.4.2" ;
+		:row_bounds = "1 1" ;
+data:
+
+ ALBS =
+  // ALBS(0,0,0)
+    0.765 ;
+
+ ALIC =
+  // ALIC(0,0,0,0)
+    0,
+  // ALIC(0,1,0,0)
+    0.24,
+  // ALIC(0,2,0,0)
+    0,
+  // ALIC(0,3,0,0)
+    0,
+  // ALIC(0,4,0,0)
+    0 ;
+
+ ALVC =
+  // ALVC(0,0,0,0)
+    0,
+  // ALVC(0,1,0,0)
+    0.07,
+  // ALVC(0,2,0,0)
+    0,
+  // ALVC(0,3,0,0)
+    0,
+  // ALVC(0,4,0,0)
+    0 ;
+
+ CLAY =
+  // CLAY(0,0,0,0)
+    4.8,
+  // CLAY(0,1,0,0)
+    2.8,
+  // CLAY(0,2,0,0)
+    2.8,
+  // CLAY(0,3,0,0)
+    2.8,
+  // CLAY(0,4,0,0)
+    2.8 ;
+
+ CMAS =
+  // CMAS(0,0,0,0)
+    0,
+  // CMAS(0,1,0,0)
+    10,
+  // CMAS(0,2,0,0)
+    0,
+  // CMAS(0,3,0,0)
+    0 ;
+
+ Cmossmas =
+  // Cmossmas(0,0,0)
+    0 ;
+
+ DELZ = 0.1, 0.25, 3.75 ;
+
+ DRN =
+  // DRN(0,0,0)
+    0 ;
+	
+ xslp = 0.031 ;
+
+ xdrainh = 0.01 ;
+
+ mann = 0.033 ;
+
+ ksat = 0.002 ;
+
+ FARE =
+  // FARE(0,0,0)
+    1 ;
+
+ FCAN =
+  // FCAN(0,0,0,0)
+    0,
+  // FCAN(0,1,0,0)
+    1,
+  // FCAN(0,2,0,0)
+    0,
+  // FCAN(0,3,0,0)
+    0,
+  // FCAN(0,4,0,0)
+    0 ;
+
+ GC =
+  // GC(0,0)
+    -1 ;
+
+ GRO =
+  // GRO(0,0,0)
+    1 ;
+	
+ rsmn = 0, 125, 0, 0 ;
+ 
+ qa50 = 0, 30, 0, 0 ;
+ 
+ vpda = 0, 0.5, 0, 0 ;
+ 
+ vpdb = 0, 0.6, 0, 0 ;
+
+ LNZ0 =
+  // LNZ0(0,0,0,0)
+    0.7,
+  // LNZ0(0,1,0,0)
+    0.9,
+  // LNZ0(0,2,0,0)
+    0,
+  // LNZ0(0,3,0,0)
+    0,
+  // LNZ0(0,4,0,0)
+    0 ;
+
+ MID =
+  // MID(0,0)
+    1 ;
+
+ ORGM =
+  // ORGM(0,0,0,0)
+    5,
+  // ORGM(0,1,0,0)
+    2,
+  // ORGM(0,2,0,0)
+    1,
+  // ORGM(0,3,0,0)
+    2,
+  // ORGM(0,4,0,0)
+    1 ;
+
+ PAMN =
+  // PAMN(0,0,0,0)
+    7,
+  // PAMN(0,1,0,0)
+    0.5,
+  // PAMN(0,2,0,0)
+    0,
+  // PAMN(0,3,0,0)
+    0 ;
+
+ PAMX =
+  // PAMX(0,0,0,0)
+    8,
+  // PAMX(0,1,0,0)
+    8,
+  // PAMX(0,2,0,0)
+    5,
+  // PAMX(0,3,0,0)
+    4 ;
+
+ RCAN =
+  // RCAN(0,0,0)
+    0 ;
+
+ RHOS =
+  // RHOS(0,0,0)
+    136 ;
+
+ ROOT =
+  // ROOT(0,0,0,0)
+    1.8,
+  // ROOT(0,1,0,0)
+    1.8,
+  // ROOT(0,2,0,0)
+    0,
+  // ROOT(0,3,0,0)
+    0 ;
+
+ SAND =
+  // SAND(0,0,0,0)
+    80.48,
+  // SAND(0,1,0,0)
+    85,
+  // SAND(0,2,0,0)
+    90,
+  // SAND(0,3,0,0)
+    93.48,
+  // SAND(0,4,0,0)
+    93.48 ;
+
+ SCAN =
+  // SCAN(0,0,0)
+    0.02 ;
+
+ SDEP =
+  // SDEP(0,0,0)
+    4.1 ;
+
+ SNO =
+  // SNO(0,0,0)
+    0 ;
+
+ SOCI =
+  // SOCI(0,0,0)
+    17 ;
+
+ TBAR =
+  // TBAR(0,0,0,0)
+    0,
+  // TBAR(0,1,0,0)
+    0,
+  // TBAR(0,2,0,0)
+    0,
+  // TBAR(0,3,0,0)
+    0,
+  // TBAR(0,4,0,0)
+    0 ;
+
+ TCAN =
+  // TCAN(0,0,0)
+    -12 ;
+
+ THIC =
+  // THIC(0,0,0,0)
+    0,
+  // THIC(0,1,0,0)
+    0,
+  // THIC(0,2,0,0)
+    0,
+  // THIC(0,3,0,0)
+    0,
+  // THIC(0,4,0,0)
+    0 ;
+
+ THLQ =
+  // THLQ(0,0,0,0)
+    0,
+  // THLQ(0,1,0,0)
+    0,
+  // THLQ(0,2,0,0)
+    0,
+  // THLQ(0,3,0,0)
+    0,
+  // THLQ(0,4,0,0)
+    0 ;
+
+ TPND =
+  // TPND(0,0,0)
+    0 ;
+
+ TSNO =
+  // TSNO(0,0,0)
+    -4.3 ;
+
+ ZPND =
+  // ZPND(0,0,0)
+    0 ;
+
+ bleafmas =
+  // bleafmas(0,0,0,0)
+    0.25,
+  // bleafmas(0,1,0,0)
+    0,
+  // bleafmas(0,2,0,0)
+    0,
+  // bleafmas(0,3,0,0)
+    0.25,
+  // bleafmas(0,4,0,0)
+    0,
+  // bleafmas(0,5,0,0)
+    0,
+  // bleafmas(0,6,0,0)
+    0,
+  // bleafmas(0,7,0,0)
+    0,
+  // bleafmas(0,8,0,0)
+    0 ;
+
+ dmoss =
+  // dmoss(0,0,0)
+    0 ;
+
+ fcancmx =
+  // fcancmx(0,0,0,0)
+    0,
+  // fcancmx(0,1,0,0)
+    0,
+  // fcancmx(0,2,0,0)
+    0,
+  // fcancmx(0,3,0,0)
+    1,
+  // fcancmx(0,4,0,0)
+    0,
+  // fcancmx(0,5,0,0)
+    0,
+  // fcancmx(0,6,0,0)
+    0,
+  // fcancmx(0,7,0,0)
+    0,
+  // fcancmx(0,8,0,0)
+    0 ;
+
+ gleafmas =
+  // gleafmas(0,0,0,0)
+    0.5,
+  // gleafmas(0,1,0,0)
+    0,
+  // gleafmas(0,2,0,0)
+    0,
+  // gleafmas(0,3,0,0)
+    0.25,
+  // gleafmas(0,4,0,0)
+    0,
+  // gleafmas(0,5,0,0)
+    0,
+  // gleafmas(0,6,0,0)
+    0,
+  // gleafmas(0,7,0,0)
+    0,
+  // gleafmas(0,8,0,0)
+    0 ;
+
+ grclarea =
+  // grclarea(0,0)
+    100 ;
+
+ ic = 1, 2, 3, 4 ;
+
+ iccp2 = 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ;
+
+ icctem = 1, 2, 3, 4, 5, 6, 7, 8, 9 ;
+
+ icp1 = 1, 2, 3, 4, 5 ;
+
+ ipeatland =
+  // ipeatland(0,0,0)
+    0 ;
+
+ lat = 42.64 ;
+
+ layer = 1, 2, 3 ;
+
+ lfstatus =
+  // lfstatus(0,0,0,0)
+    4,
+  // lfstatus(0,1,0,0)
+    4,
+  // lfstatus(0,2,0,0)
+    4,
+  // lfstatus(0,3,0,0)
+    4,
+  // lfstatus(0,4,0,0)
+    4,
+  // lfstatus(0,5,0,0)
+    4,
+  // lfstatus(0,6,0,0)
+    4,
+  // lfstatus(0,7,0,0)
+    4,
+  // lfstatus(0,8,0,0)
+    1 ;
+
+ litrmass =
+  // litrmass(0,0,0,0)
+    2.4,
+  // litrmass(0,1,0,0)
+    2.4,
+  // litrmass(0,2,0,0)
+    0,
+  // litrmass(0,3,0,0)
+    0,
+  // litrmass(0,4,0,0)
+    0,
+  // litrmass(0,5,0,0)
+    0,
+  // litrmass(0,6,0,0)
+    0,
+  // litrmass(0,7,0,0)
+    0,
+  // litrmass(0,8,0,0)
+    0,
+  // litrmass(0,9,0,0)
+    _,
+  // litrmass(0,10,0,0)
+    _ ;
+
+ litrmsmoss =
+  // litrmsmoss(0,0,0)
+    0 ;
+
+ lon = 279.44 ;
+
+ nmtest =
+  // nmtest(0,0)
+    1 ;
+
+ pandays =
+  // pandays(0,0,0,0)
+    7,
+  // pandays(0,1,0,0)
+    0,
+  // pandays(0,2,0,0)
+    7,
+  // pandays(0,3,0,0)
+    0,
+  // pandays(0,4,0,0)
+    0,
+  // pandays(0,5,0,0)
+    0,
+  // pandays(0,6,0,0)
+    0,
+  // pandays(0,7,0,0)
+    0,
+  // pandays(0,8,0,0)
+    0 ;
+
+ rootmass =
+  // rootmass(0,0,0,0)
+    1.9,
+  // rootmass(0,1,0,0)
+    0,
+  // rootmass(0,2,0,0)
+    0,
+  // rootmass(0,3,0,0)
+    1.5,
+  // rootmass(0,4,0,0)
+    0,
+  // rootmass(0,5,0,0)
+    0,
+  // rootmass(0,6,0,0)
+    0,
+  // rootmass(0,7,0,0)
+    0,
+  // rootmass(0,8,0,0)
+    0 ;
+
+ slope = 1, 2, 3, 4, 5, 6, 7, 8 ;
+
+ slopefrac =
+  // slopefrac(0,0,0,0)
+    0,
+  // slopefrac(0,1,0,0)
+    0,
+  // slopefrac(0,2,0,0)
+    0,
+  // slopefrac(0,3,0,0)
+    0,
+  // slopefrac(0,4,0,0)
+    0,
+  // slopefrac(0,5,0,0)
+    0,
+  // slopefrac(0,6,0,0)
+    0,
+  // slopefrac(0,7,0,0)
+    0 ;
+
+ soilcmas =
+  // soilcmas(0,0,0,0)
+    9,
+  // soilcmas(0,1,0,0)
+    0,
+  // soilcmas(0,2,0,0)
+    0,
+  // soilcmas(0,3,0,0)
+    12,
+  // soilcmas(0,4,0,0)
+    0,
+  // soilcmas(0,5,0,0)
+    0,
+  // soilcmas(0,6,0,0)
+    0,
+  // soilcmas(0,7,0,0)
+    2,
+  // soilcmas(0,8,0,0)
+    2,
+  // soilcmas(0,9,0,0)
+    0,
+  // soilcmas(0,10,0,0)
+    0 ;
+
+ stemmass =
+  // stemmass(0,0,0,0)
+    7.3,
+  // stemmass(0,1,0,0)
+    0,
+  // stemmass(0,2,0,0)
+    0,
+  // stemmass(0,3,0,0)
+    10,
+  // stemmass(0,4,0,0)
+    0,
+  // stemmass(0,5,0,0)
+    0,
+  // stemmass(0,6,0,0)
+    0,
+  // stemmass(0,7,0,0)
+    0,
+  // stemmass(0,8,0,0)
+    0 ;
+
+ gru = 1 ;
+
+ maxAnnualActLyr =
+  // maxAnnualActLyr(0,0,0)
+    61.4 ;
+
+ grwtheff =
+  // grwtheff(0,0,0,0)
+    100,
+  // grwtheff(0,1,0,0)
+    100,
+  // grwtheff(0,2,0,0)
+    100,
+  // grwtheff(0,3,0,0)
+    100,
+  // grwtheff(0,4,0,0)
+    100,
+  // grwtheff(0,5,0,0)
+    100,
+  // grwtheff(0,6,0,0)
+    100,
+  // grwtheff(0,7,0,0)
+    100,
+  // grwtheff(0,8,0,0)
+    100 ;
+}

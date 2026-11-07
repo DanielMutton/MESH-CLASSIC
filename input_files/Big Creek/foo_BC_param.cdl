@@ -1,0 +1,1092 @@
+netcdf MESH_parameters {
+dimensions:
+	gru = 11 ;
+	NGRU = 12 ;
+	lat = 30 ;
+	lon = 20 ;
+	icp1 = 5 ;
+	layer = 5 ;
+	ic = 4 ;
+	icctem = 9 ;
+	iccp2 = 11 ;
+	slope = 8 ;
+variables:
+	float lat(lat) ;
+		lat:_FillValue = NaNf ;
+		lat:standard_name = "latitude" ;
+		lat:units = "degrees_north" ;
+		lat:axis = "Y" ;
+	float lon(lon) ;
+		lon:_FillValue = NaNf ;
+		lon:standard_name = "longitude" ;
+		lon:units = "degrees_east" ;
+		lon:axis = "X" ;
+	int crs ;
+		crs:grid_mapping_name = "latitude_longitude" ;
+		crs:longitude_of_prime_meridian = 0.f ;
+		crs:semi_major_axis = 6378137.f ;
+		crs:inverse_flattening = 298.2572f ;
+	int layer(layer) ;
+		layer:standard_name = "ground layers" ;
+	float delz(layer) ;
+		delz:_FillValue = NaNf ;
+		delz:units = "m" ;
+		delz:long_name = "Ground layer thickness" ;
+	int rank(lat, lon) ;
+		rank:coordinates = "longitude latitude" ;
+		rank:grid_mapping = "crs" ;
+	int next(lat, lon) ;
+	float da(lat, lon) ;
+	float chnlslope(lat, lon) ;
+	float chnllength(lat, lon) ;
+	float gridarea(lat, lon) ;
+	float gru(NGRU, lat, lon) ;
+		gru:coordinates = "longitude latitude" ;
+		gru:grid_mapping = "crs" ;
+	int ic(ic) ;
+		ic:standard_name = "physics (CLASS) PFTs" ;
+	int iccp2(iccp2) ;
+		iccp2:standard_name = "biogeochemical (CTEM) PFTs plus bareground and land use change product pools" ;
+	int icctem(icctem) ;
+		icctem:standard_name = "biogeochemical (CTEM) PFTs" ;
+	int icp1(icp1) ;
+		icp1:standard_name = "physics (CLASS) PFTs plus bareground" ;
+	float fcan(gru, icp1) ;
+		fcan:_FillValue = -999.f ;
+		fcan:units = "-" ;
+		fcan:long_name = "Annual maximum fractional coverage of modelled area (read in for CLASS only runs)" ;
+	float lnz0(gru, icp1) ;
+		lnz0:_FillValue = -999.f ;
+		lnz0:units = "-" ;
+		lnz0:long_name = "Natural logarithm of maximum vegetation roughness length" ;
+	float alvc(gru, icp1) ;
+		alvc:_FillValue = -999.f ;
+		alvc:units = "-" ;
+		alvc:long_name = "Average visible albedo of vegetation category when fully-leafed" ;
+	float alic(gru, icp1) ;
+		alic:_FillValue = -999.f ;
+		alic:units = "-" ;
+		alic:long_name = "Average near-IR albedo of vegetation category when fully-leafed" ;
+	float pamx(gru, ic) ;
+		pamx:_FillValue = -999.f ;
+		pamx:units = "m2/m2" ;
+		pamx:long_name = "Annual maximum plant area index of vegetation category" ;
+	float pamn(gru, ic) ;
+		pamn:_FillValue = -999.f ;
+		pamn:units = "m2/m2" ;
+		pamn:long_name = "Annual minimum plant area index of vegetation category" ;
+	float cmas(gru, ic) ;
+		cmas:_FillValue = -999.f ;
+		cmas:units = "$[kg m^{-2} ]$" ;
+		cmas:long_name = "Annual maximum canopy mass for vegetation category" ;
+	float root(gru, ic) ;
+		root:_FillValue = -999.f ;
+		root:units = "m" ;
+		root:long_name = "Annual maximum rooting depth of vegetation category" ;
+	float rsmn(gru, ic) ;
+	float qa50(gru, ic) ;
+	float vpda(gru, ic) ;
+	float vpdb(gru, ic) ;
+	float psga(gru, ic) ;
+	float psgb(gru, ic) ;
+	float drn(gru) ;
+		drn:_FillValue = -999.f ;
+		drn:units = "-" ;
+		drn:long_name = "Soil drainage index" ;
+	float sdep(gru) ;
+		sdep:_FillValue = -999.f ;
+		sdep:units = "m" ;
+		sdep:long_name = "Soil permeable depth" ;
+	float fare(gru) ;
+		fare:_FillValue = -999.f ;
+		fare:units = "fraction" ;
+		fare:long_name = "Tile fractional area of gridcell" ;
+	float dd(gru) ;
+		dd:units = "km km**-2" ;
+	float xslp(gru) ;
+	float xdrainh(gru) ;
+	float mann(gru) ;
+	float ksat(gru) ;
+	int mid(gru) ;
+		mid:_FillValue = -999 ;
+		mid:units = "-" ;
+		mid:long_name = "Mosaic tile type identifier (1 for land surface, 0 for inland lake)" ;
+	float sand(gru, layer) ;
+		sand:_FillValue = NaNf ;
+		sand:units = "%" ;
+		sand:long_name = "Percentage sand content" ;
+	float clay(gru, layer) ;
+		clay:_FillValue = NaNf ;
+		clay:units = "%" ;
+		clay:long_name = "Percentage clay content" ;
+	float orgm(gru, layer) ;
+		orgm:_FillValue = NaNf ;
+		orgm:units = "%" ;
+		orgm:long_name = "Percentage organic matter content" ;
+	float tbar(gru, layer) ;
+		tbar:_FillValue = NaNf ;
+		tbar:units = "C" ;
+		tbar:long_name = "Temperature of soil layers" ;
+	float tcan(gru) ;
+		tcan:_FillValue = -999.f ;
+		tcan:units = "C" ;
+		tcan:long_name = "Vegetation canopy temperature" ;
+	float tsno(gru) ;
+		tsno:_FillValue = -999.f ;
+		tsno:units = "C" ;
+		tsno:long_name = "Snowpack temperature" ;
+	float tpnd(gru) ;
+		tpnd:_FillValue = -999.f ;
+		tpnd:units = "C" ;
+		tpnd:long_name = "Temperature of ponded water" ;
+	float thlq(gru, layer) ;
+		thlq:_FillValue = NaNf ;
+		thlq:units = "m3/m3" ;
+		thlq:long_name = "Volumetric liquid water content of soil layers" ;
+	float thic(gru, layer) ;
+		thic:_FillValue = NaNf ;
+		thic:units = "m3/m3" ;
+		thic:long_name = "Volumetric frozen water content of soil layers" ;
+	float zpnd(gru) ;
+		zpnd:_FillValue = -999.f ;
+		zpnd:units = "m" ;
+		zpnd:long_name = "Depth of ponded water on surface" ;
+	float rcan(gru) ;
+		rcan:_FillValue = -999.f ;
+		rcan:units = "-" ;
+		rcan:long_name = "Intercepted liquid water stored on canopy" ;
+	float scan(gru) ;
+		scan:_FillValue = -999.f ;
+		scan:units = "kg/m2" ;
+		scan:long_name = "Intercepted frozen water stored on canopy" ;
+	float sno(gru) ;
+		sno:_FillValue = -999.f ;
+		sno:units = "kg/m2" ;
+		sno:long_name = "Mass of snow pack" ;
+	float albs(gru) ;
+		albs:_FillValue = -999.f ;
+		albs:units = "-" ;
+		albs:long_name = "Soil drainage index" ;
+	float rhos(gru) ;
+		rhos:_FillValue = -999.f ;
+		rhos:units = "kg/m3" ;
+		rhos:long_name = "Density of snow" ;
+	float gro(gru) ;
+		gro:_FillValue = -999.f ;
+		gro:units = "-" ;
+		gro:long_name = "Vegetation growth index" ;
+	float soci(gru) ;
+		soci:_FillValue = -999.f ;
+		soci:units = "index" ;
+		soci:long_name = "Soil colour index" ;
+	float gc ;
+		gc:units = "-" ;
+		gc:long_name = "GCM surface descriptor - land surfaces (inc. inland water) is -1" ;
+	int slope(slope) ;
+		slope:standard_name = "wetland slope fractions for 0.025, 0.05, 0.1, 0.15, 0.20, 0.25, 0.3 and 0.35 percent slope threshold" ;
+	double cmossmas(gru) ;
+		cmossmas:_FillValue = -999. ;
+		cmossmas:units = "kgC/m2" ;
+		cmossmas:long_name = "C in moss biomass" ;
+	double bleafmas(gru, icctem) ;
+		bleafmas:_FillValue = -999. ;
+		bleafmas:units = "kgC/m2" ;
+		bleafmas:long_name = "Brown leaf mass" ;
+	double dmoss(gru) ;
+		dmoss:_FillValue = -999. ;
+		dmoss:units = "m" ;
+		dmoss:long_name = "Depth of living moss" ;
+	double fcancmx(gru, icctem) ;
+		fcancmx:_FillValue = -999. ;
+		fcancmx:units = "-" ;
+		fcancmx:long_name = "PFT fractional coverage per grid cell" ;
+	double gleafmas(gru, icctem) ;
+		gleafmas:_FillValue = -999. ;
+		gleafmas:units = "kgC/m2" ;
+		gleafmas:long_name = "Green leaf mass" ;
+	double grclarea(lat, lon) ;
+		grclarea:_FillValue = -999. ;
+		grclarea:units = "km2" ;
+		grclarea:long_name = "Area of grid cell" ;
+	double ipeatland(gru) ;
+		ipeatland:_FillValue = -999. ;
+		ipeatland:units = "-" ;
+		ipeatland:long_name = "Peatland flag: 0 = not a peatland, 1= bog, 2 = fen" ;
+	double lfstatus(gru, icctem) ;
+		lfstatus:_FillValue = -999. ;
+		lfstatus:units = "-" ;
+		lfstatus:long_name = "Leaf status, see Phenology" ;
+	double litrmass(gru, iccp2) ;
+		litrmass:_FillValue = -999. ;
+		litrmass:units = "kgC/m2" ;
+		litrmass:long_name = "Litter mass per soil layer" ;
+	double litrmsmoss(gru) ;
+		litrmsmoss:_FillValue = -999. ;
+		litrmsmoss:units = "kgC/m2" ;
+		litrmsmoss:long_name = "Moss litter mass" ;
+	double pandays(gru, icctem) ;
+		pandays:_FillValue = -999. ;
+		pandays:units = "-" ;
+		pandays:long_name = "Days with +ve new photosynthesis, see Phenology" ;
+	double rootmass(gru, icctem) ;
+		rootmass:_FillValue = -999. ;
+		rootmass:units = "kgC/m2" ;
+		rootmass:long_name = "Root mass" ;
+	double slopefrac(gru, slope) ;
+		slopefrac:_FillValue = -999. ;
+		slopefrac:units = "-" ;
+		slopefrac:long_name = "Slope-based fraction for dynamic wetlands" ;
+	double soilcmas(gru, iccp2) ;
+		soilcmas:_FillValue = -999. ;
+		soilcmas:units = "kgC/m2" ;
+		soilcmas:long_name = "Soil C mass per soil layer" ;
+	double stemmass(gru, icctem) ;
+		stemmass:_FillValue = -999. ;
+		stemmass:units = "kgC/m2" ;
+		stemmass:long_name = "Stem mass" ;
+	double maxAnnualActLyr(gru) ;
+		maxAnnualActLyr:_FillValue = -999. ;
+		maxAnnualActLyr:long_name = "Active layer thickness maximum over the e-folding period specified by parameter eftime" ;
+		maxAnnualActLyr:units = "m" ;
+	double grwtheff(gru, icctem) ;
+		grwtheff:_FillValue = -999. ;
+		grwtheff:long_name = "Growth efficiency. Change in biomass per year per unit max. LAI,for use in mortality subroutine" ;
+		grwtheff:units = "(kg C/m^2)/(m2/m2)" ;
+
+// global attributes:
+		:title = "CLASSIC initialization file created from: /home/acrp001/mattFortier2019/code/temp/CA-TPD.INI" ;
+		:creation_date = "20190523" ;
+		:row_bounds = "1 1" ;
+		:history = "Fri May 12 12:07:58 2023: ncatted -a units,dd,a,c,km km**-2 MESH_parameters.nc\n",
+			"Mon Mar 20 12:03:14 2023: ncrename -d basin,gru MESH_parameters.nc\n",
+			"Mon Mar 20 08:47:52 2023: ncrename -d tile,basin MESH_parameters.nc\n",
+			"Wed Jun 12 17:19:01 2019: ncks -4 ./rsfile.nc ./rsfile.nc" ;
+		:NCO = "4.7.2" ;
+data:
+
+ lat = 42.56, 42.58, 42.6, 42.62, 42.64, 42.66, 42.68, 42.7, 42.72, 42.74, 
+    42.76, 42.78, 42.8, 42.82, 42.84, 42.86, 42.88, 42.9, 42.92, 42.94, 
+    42.96, 42.98, 43, 43.02, 43.04, 43.06, 43.08, 43.1, 43.12, 43.14 ;
+
+ lon = -80.69, -80.67, -80.65, -80.63, -80.61, -80.59, -80.57, -80.55, 
+    -80.53, -80.51, -80.49, -80.47, -80.45, -80.43, -80.41, -80.39, -80.37, 
+    -80.35, -80.33, -80.31 ;
+
+ crs = _ ;
+
+ layer = 1, 2, 3, 4, 5 ;
+
+ delz = 0.10, 0.25, 0.25, 0.25, 0.25, 3.0 ;
+
+ ic = 1, 2, 3, 4 ;
+
+ iccp2 = 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ;
+
+ icctem = 1, 2, 3, 4, 5, 6, 7, 8, 9 ;
+
+ icp1 = 1, 2, 3, 4, 5 ;
+
+ fcan =
+  // fcan(0, 0-4)
+    1, 0, 0, 0, 0,
+  // fcan(1, 0-4)
+    1, 0, 0, 0, 0,
+  // fcan(2, 0-4)
+    0, 1, 0, 0, 0,
+  // fcan(3, 0-4)
+    0.5, 0.5, 0, 0, 0,
+  // fcan(4, 0-4)
+    0, 0, 0, 1, 0,
+  // fcan(5, 0-4)
+    0, 0, 0, 1, 0,
+  // fcan(6, 0-4)
+    0, 0, 0, 1, 0,
+  // fcan(7, 0-4)
+    0, 0, 1, 0, 0,
+  // fcan(8, 0-4)
+    0, 0, 0, 0, 1,
+  // fcan(9, 0-4)
+    0, 0, 0, 0, 1,
+  // fcan(10, 0-4)
+    0, 0, 0, 0, 1 ;
+	
+ fcancmx =
+  // fcancmx(0, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // fcancmx(1, 0-8)
+    1, 0, 0, 0, 0, 0, 0, 0, 0,
+  // fcancmx(2, 0-8)
+    0, 0, 0, 1, 0, 0, 0, 0, 0,
+  // fcancmx(3, 0-8)
+    0.5, 0, 0, 0.5, 0, 0, 0, 0, 0,
+  // fcancmx(4, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0.5, 0.5,
+  // fcancmx(5, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0.5, 0.5,
+  // fcancmx(6, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0.5, 0.5,
+  // fcancmx(7, 0-8)
+    0, 0, 0, 0, 0, 0.5, 0.5, 0, 0,
+  // fcancmx(8, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // fcancmx(9, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // fcancmx(10, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ lnz0 =
+  // lnz0(0, 0-4)
+    0.4, 0, 0, 0, 0,
+  // lnz0(1, 0-4)
+    0.7, 0, 0, 0, 0,
+  // lnz0(2, 0-4)
+    0, 0.9, 0, 0, 0,
+  // lnz0(3, 0-4)
+    0.7, 0.9, 0, 0, 0,
+  // lnz0(4, 0-4)
+    0, 0, 0, -1, 0,
+  // lnz0(5, 0-4)
+    0, 0, 0, -2.5, 0,
+  // lnz0(6, 0-4)
+    0, 0, 0, -1, 0,
+  // lnz0(7, 0-4)
+    0, 0, -2, 0, 0,
+  // lnz0(8, 0-4)
+    0, 0, 0, 0, 0,
+  // lnz0(9, 0-4)
+    0, 0, 0, 0, 0,
+  // lnz0(10, 0-4)
+    0, 0, 0, 0, 0 ;
+
+ alvc =
+  // alvc(0, 0-4)
+    0.04, 0, 0, 0, 0,
+  // alvc(1, 0-4)
+    0.04, 0, 0, 0, 0,
+  // alvc(2, 0-4)
+    0, 0.07, 0, 0, 0,
+  // alvc(3, 0-4)
+    0.04, 0.07, 0, 0, 0,
+  // alvc(4, 0-4)
+    0, 0, 0, 0.06, 0,
+  // alvc(5, 0-4)
+    0, 0, 0, 0.06, 0,
+  // alvc(6, 0-4)
+    0, 0, 0, 0.06, 0,
+  // alvc(7, 0-4)
+    0, 0, 0.06, 0, 0,
+  // alvc(8, 0-4)
+    0, 0, 0, 0, 0.06,
+  // alvc(9, 0-4)
+    0, 0, 0, 0, 0.06,
+  // alvc(10, 0-4)
+    0, 0, 0, 0, 0.06 ;
+
+ alic =
+  // alic(0, 0-4)
+    0.2, 0, 0, 0, 0,
+  // alic(1, 0-4)
+    0.2, 0, 0, 0, 0,
+  // alic(2, 0-4)
+    0, 0.24, 0, 0, 0,
+  // alic(3, 0-4)
+    0.2, 0.24, 0, 0, 0,
+  // alic(4, 0-4)
+    0, 0, 0, 0.18, 0,
+  // alic(5, 0-4)
+    0, 0, 0, 0.22, 0,
+  // alic(6, 0-4)
+    0, 0, 0, 0.22, 0,
+  // alic(7, 0-4)
+    0, 0, 0.18, 0, 0,
+  // alic(8, 0-4)
+    0, 0, 0, 0, 0.22,
+  // alic(9, 0-4)
+    0, 0, 0, 0, 0.22,
+  // alic(10, 0-4)
+    0, 0, 0, 0, 0.22 ;
+
+ pamx =
+  // pamx(0, 0-3)
+    1, 0, 0, 0,
+  // pamx(1, 0-3)
+    8, 0, 0, 0,
+  // pamx(2, 0-3)
+    0, 8, 0, 0,
+  // pamx(3, 0-3)
+    8, 8, 0, 0,
+  // pamx(4, 0-3)
+    0, 0, 0, 5,
+  // pamx(5, 0-3)
+    0, 0, 0, 4,
+  // pamx(6, 0-3)
+    0, 0, 0, 6,
+  // pamx(7, 0-3)
+    0, 0, 3, 0,
+  // pamx(8, 0-3)
+    0, 0, 0, 0,
+  // pamx(9, 0-3)
+    0, 0, 0, 0,
+  // pamx(10, 0-3)
+    0, 0, 0, 0 ;
+
+ pamn =
+  // pamn(0, 0-3)
+    1, 0, 0, 0,
+  // pamn(1, 0-3)
+    7, 0, 0, 0,
+  // pamn(2, 0-3)
+    0, 0.5, 0, 0,
+  // pamn(3, 0-3)
+    7, 0.5, 0, 0,
+  // pamn(4, 0-3)
+    0, 0, 0, 4,
+  // pamn(5, 0-3)
+    0, 0, 0, 3,
+  // pamn(6, 0-3)
+    0, 0, 0, 5,
+  // pamn(7, 0-3)
+    0, 0, 0, 0,
+  // pamn(8, 0-3)
+    0, 0, 0, 0,
+  // pamn(9, 0-3)
+    0, 0, 0, 0,
+  // pamn(10, 0-3)
+    0, 0, 0, 0 ;
+
+ cmas =
+  // cmas(0, 0-3)
+    1, 0, 0, 0,
+  // cmas(1, 0-3)
+    15, 0, 0, 0,
+  // cmas(2, 0-3)
+    0, 12, 0, 0,
+  // cmas(3, 0-3)
+    15, 12, 0, 0,
+  // cmas(4, 0-3)
+    0, 0, 0, 2,
+  // cmas(5, 0-3)
+    0, 0, 0, 2,
+  // cmas(6, 0-3)
+    0, 0, 0, 3,
+  // cmas(7, 0-3)
+    0, 0, 3, 0,
+  // cmas(8, 0-3)
+    0, 0, 0, 0,
+  // cmas(9, 0-3)
+    0, 0, 0, 0,
+  // cmas(10, 0-3)
+    0, 0, 0, 0 ;
+
+ root =
+  // root(0, 0-3)
+    1, 0, 0, 0,
+  // root(1, 0-3)
+    1.8, 0, 0, 0,
+  // root(2, 0-3)
+    0, 1.8, 0, 0,
+  // root(3, 0-3)
+    1.8, 1.8, 0, 0,
+  // root(4, 0-3)
+    0, 0, 0, 1.4,
+  // root(5, 0-3)
+    0, 0, 0, 1.064,
+  // root(6, 0-3)
+    0, 0, 0, 1.064,
+  // root(7, 0-3)
+    0, 0, 1.4, 0,
+  // root(8, 0-3)
+    0, 0, 0, 0,
+  // root(9, 0-3)
+    0, 0, 0, 0,
+  // root(10, 0-3)
+    0, 0, 0, 0 ;
+
+ rsmn =
+  // rsmn(0, 0-3)
+    200, 125, 85, 0,
+  // rsmn(1, 0-3)
+    127, 127, 0, 0,
+  // rsmn(2, 0-3)
+    127, 127, 0, 0,
+  // rsmn(3, 0-3)
+    127, 127, 0, 0,
+  // rsmn(4, 0-3)
+    112, 112, 112, 112,
+  // rsmn(5, 0-3)
+    112, 112, 112, 112,
+  // rsmn(6, 0-3)
+    112, 112, 112, 112,
+  // rsmn(7, 0-3)
+    112, 112, 112, 112,
+  // rsmn(8, 0-3)
+    112, 112, 112, 112,
+  // rsmn(9, 0-3)
+    112, 112, 112, 112,
+  // rsmn(10, 0-3)
+    112, 112, 112, 112 ;
+
+ qa50 =
+  // qa50(0, 0-3)
+    30, 40, 30, 30,
+  // qa50(1, 0-3)
+   36.7, 36.7, 0, 0,
+  // qa50(2, 0-3)
+    36.7, 36.7, 0, 0,
+  // qa50(3, 0-3)
+    36.7, 36.7, 0, 0,
+  // qa50(4, 0-3)
+    49.9, 49.9, 49.9, 49.9,
+  // qa50(5, 0-3)
+    49.9, 49.9, 49.9, 49.9,
+  // qa50(6, 0-3)
+    49.9, 49.9, 49.9, 49.9,
+  // qa50(7, 0-3)
+    49.9, 49.9, 49.9, 49.9,
+  // qa50(8, 0-3)
+    49.9, 49.9, 49.9, 49.9,
+  // qa50(9, 0-3)
+    49.9, 49.9, 49.9, 49.9,
+  // qa50(10, 0-3)
+    49.9, 49.9, 49.9, 49.9 ;
+
+ vpda =
+  // vpda(0, 0-3)
+    0.65, 0.5, 0.5, 0,
+  // vpda(1, 0-3)
+    0.2, 0.2, 0, 0,
+  // vpda(2, 0-3)
+    0.2, 0.2, 0, 0,
+  // vpda(3, 0-3)
+    0.2, 0.2, 0, 0,
+  // vpda(4, 0-3)
+    0.15, 0.15, 0.15, 0.15,
+  // vpda(5, 0-3)
+    0.15, 0.15, 0.15, 0.15,
+  // vpda(6, 0-3)
+    0.15, 0.15, 0.15, 0.15,
+  // vpda(7, 0-3)
+    0.15, 0.15, 0.15, 0.15,
+  // vpda(8, 0-3)
+    0.15, 0.15, 0.15, 0.15,
+  // vpda(9, 0-3)
+    0.15, 0.15, 0.15, 0.15,
+  // vpda(10, 0-3)
+    0.15, 0.15, 0.15, 0.15 ;
+
+ vpdb =
+  // vpdb(0, 0-3)
+    1.05, 0.6, 1, 1,
+  // vpdb(1, 0-3)
+    0.9, 0.9, 0, 0,
+  // vpdb(2, 0-3)
+    0.9, 0.9, 0, 0,
+  // vpdb(3, 0-3)
+    0.9, 0.9, 0, 0,
+  // vpdb(4, 0-3)
+    1.21, 1.21, 1.21, 1.21,
+  // vpdb(5, 0-3)
+    1.21, 1.21, 1.21, 1.21,
+  // vpdb(6, 0-3)
+    1.21, 1.21, 1.21, 1.21,
+  // vpdb(7, 0-3)
+    1.21, 1.21, 1.21, 1.21,
+  // vpdb(8, 0-3)
+    1.21, 1.21, 1.21, 1.21,
+  // vpdb(9, 0-3)
+    1.21, 1.21, 1.21, 1.21,
+  // vpdb(10, 0-3)
+    1.21, 1.21, 1.21, 1.21 ;
+
+ psga =
+  // psga(0, 0-3)
+    100, 100, 100, 0,
+  // psga(1, 0-3)
+    57, 57, 0, 0,
+  // psga(2, 0-3)
+    57, 57, 0, 0,
+  // psga(3, 0-3)
+    57, 57, 0, 0,
+  // psga(4, 0-3)
+    58.08, 58.08, 58.08, 58.08,
+  // psga(5, 0-3)
+    58.08, 58.08, 58.08, 58.08,
+  // psga(6, 0-3)
+    58.08, 58.08, 58.08, 58.08,
+  // psga(7, 0-3)
+    58.08, 58.08, 58.08, 58.08,
+  // psga(8, 0-3)
+    58.08, 58.08, 58.08, 58.08,
+  // psga(9, 0-3)
+    58.08, 58.08, 58.08, 58.08,
+  // psga(10, 0-3)
+    58.08, 58.08, 58.08, 58.08 ;
+
+ psgb =
+  // psgb(0, 0-3)
+    5, 5, 5, 5,
+  // psgb(1, 0-3)
+    5, 5, 0, 0,
+  // psgb(2, 0-3)
+    5, 5, 0, 0,
+  // psgb(3, 0-3)
+    5, 5, 0, 0,
+  // psgb(4, 0-3)
+    4.7, 4.7, 4.7, 4.7,
+  // psgb(5, 0-3)
+    4.7, 4.7, 4.7, 4.7,
+  // psgb(6, 0-3)
+    4.7, 4.7, 4.7, 4.7,
+  // psgb(7, 0-3)
+    4.7, 4.7, 4.7, 4.7,
+  // psgb(8, 0-3)
+    4.7, 4.7, 4.7, 4.7,
+  // psgb(9, 0-3)
+    4.7, 4.7, 4.7, 4.7,
+  // psgb(10, 0-3)
+    4.7, 4.7, 4.7, 4.7 ;
+
+ drn = 0.022, 0.5, 0.5, 0.5, 0.232, 0.232, 0.232, 0.232, 0.232, 0.232, 0.232 ;
+
+ sdep = 0.943, 4.1, 4.1, 4.1, 4.1, 4.1, 4.1, 4.1, 4.1, 4.1, 4.1 ;
+
+ fare = 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ;
+
+ dd = 21.169, 65.863, 65.863, 65.863, 89.00, 89.00, 89.00, 89.00, 89.00, 89.00, 89.00 ;
+
+ xslp = 0.031, 0.07, 0.07, 0.07, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05 ;
+
+ xdrainh = 0.117, 0.51, 0.51, 0.51, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18, 0.18 ;
+
+ mann = 0.033, 0.029, 0.029, 0.029, 0.018, 0.018, 0.018, 0.018, 0.018, 0.018, 0.018 ;
+
+ ksat = 0.033, 0.030, 0.030, 0.030, 0.007, 0.007, 0.007, 0.007, 0.007, 0.007, 0.007 ;
+
+ mid = 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ;
+
+ sand =
+  // sand(0, 0-4)
+    75.48, 75.48, 75.48, 75.48, 75.48,
+  // sand(1, 0-4)
+    83, 85, 90, 93.5, 93.5,
+  // sand(2, 0-4)
+    83, 85, 90, 93.5, 93.5,
+  // sand(3, 0-4)
+    83, 85, 90, 93.5, 93.5,
+  // sand(4, 0-4)
+    83, 85, 90, 93.5, 93.5,
+  // sand(5, 0-4)
+    83, 85, 90, 93.5, 93.5,
+  // sand(6, 0-4)
+    83, 85, 90, 93.5, 93.5,
+  // sand(7, 0-4)
+    70.5, 75, 80, 83.5, 83.5,
+  // sand(8, 0-4)
+    83, 85, 90, 93.5, 93.5,
+  // sand(9, 0-4)
+    83, 85, 90, 93.5, 93.5,
+  // sand(10, 0-4)
+    83, 85, 90, 90, 90 ;
+
+ clay =
+  // clay(0, 0-4)
+    2.8, 2.8, 2.8, 2.8, 2.8,
+  // clay(1, 0-4)
+    5, 4, 3.5, 3, 2,
+  // clay(2, 0-4)
+    5, 4, 3.5, 3, 2,
+  // clay(3, 0-4)
+    5, 4, 3.5, 3, 2,
+  // clay(4, 0-4)
+    5, 4, 3.5, 3, 2,
+  // clay(5, 0-4)
+    5, 4, 3.5, 3, 2,
+  // clay(6, 0-4)
+    5, 4, 3.5, 3, 2,
+  // clay(7, 0-4)
+    5, 4, 3.5, 3, 2,
+  // clay(8, 0-4)
+    5, 4, 3.5, 3, 2,
+  // clay(9, 0-4)
+    5, 4, 3.5, 3, 2,
+  // clay(10, 0-4)
+    5, 4, 3.5, 3, 2 ;
+
+ orgm =
+  // orgm(0, 0-4)
+    5, 4, 3, 1, 1,
+  // orgm(1, 0-4)
+    5, 2, 1, 1, 1,
+  // orgm(2, 0-4)
+    5, 2, 1, 1, 1,
+  // orgm(3, 0-4)
+    5, 2, 1, 1, 1,
+  // orgm(4, 0-4)
+    5, 2, 1, 1, 1,
+  // orgm(5, 0-4)
+    5, 2, 1, 1, 1,
+  // orgm(6, 0-4)
+    5, 2, 1, 1, 1,
+  // orgm(7, 0-4)
+    5, 2, 1, 1, 1,
+  // orgm(8, 0-4)
+    5, 2, 1, 1, 1,
+  // orgm(9, 0-4)
+    5, 2, 1, 1, 1,
+  // orgm(10, 0-4)
+    5, 2, 1, 1, 1 ;
+
+ tbar =
+  // tbar(0, 0-4)
+    13.4, 15, 15.3, 15.3, 15.3,
+  // tbar(1, 0-4)
+    13.4, 15, 15.3, 15.3, 15.3,
+  // tbar(2, 0-4)
+    13.4, 15, 15.3, 15.3, 15.3,
+  // tbar(3, 0-4)
+    13.4, 15, 15.3, 15.3, 15.3,
+  // tbar(4, 0-4)
+    13.4, 15, 15.3, 15.3, 15.3,
+  // tbar(5, 0-4)
+    13.4, 15, 15.3, 15.3, 15.3,
+  // tbar(6, 0-4)
+    13.4, 15, 15.3, 15.3, 15.3,
+  // tbar(7, 0-4)
+    13.4, 15, 15.3, 15.3, 15.3,
+  // tbar(8, 0-4)
+    13.4, 15, 15.3, 15.3, 15.3,
+  // tbar(9, 0-4)
+    13.4, 15, 15.3, 15.3, 15.3,
+  // tbar(10, 0-4)
+    13.4, 15, 15.3, 15.3, 15.3 ;
+
+ tcan = 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12 ;
+
+ tsno = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ tpnd = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ thlq =
+  // thlq(0, 0-4)
+    0.08, 0.06, 0.08, 0.08, 0.08,
+  // thlq(1, 0-4)
+    0.15, 0.15, 0.15, 0.15, 0.15,
+  // thlq(2, 0-4)
+    0.15, 0.15, 0.15, 0.15, 0.15,
+  // thlq(3, 0-4)
+    0.15, 0.15, 0.15, 0.15, 0.15,
+  // thlq(4, 0-4)
+    0.08, 0.06, 0.08, 0.08, 0.08,
+  // thlq(5, 0-4)
+    0.08, 0.06, 0.08, 0.08, 0.08,
+  // thlq(6, 0-4)
+    0.08, 0.06, 0.08, 0.08, 0.08,
+  // thlq(7, 0-4)
+    0.08, 0.06, 0.08, 0.08, 0.08,
+  // thlq(8, 0-4)
+    0.08, 0.06, 0.08, 0.08, 0.08,
+  // thlq(9, 0-4)
+    0.08, 0.06, 0.08, 0.8, 0.8,
+  // thlq(10, 0-4)
+    0.08, 0.06, 0.08, 0.8, 0.8 ;
+
+ thic =
+  // thic(0, 0-4)
+    0, 0, 0, 0, 0,
+  // thic(1, 0-4)
+    0, 0, 0, 0, 0,
+  // thic(2, 0-4)
+    0, 0, 0, 0, 0,
+  // thic(3, 0-4)
+    0, 0, 0, 0, 0,
+  // thic(4, 0-4)
+    0, 0, 0, 0, 0,
+  // thic(5, 0-4)
+    0, 0, 0, 0, 0,
+  // thic(6, 0-4)
+    0, 0, 0, 0, 0,
+  // thic(7, 0-4)
+    0, 0, 0, 0, 0,
+  // thic(8, 0-4)
+    0, 0, 0, 0, 0,
+  // thic(9, 0-4)
+    0, 0, 0, 0, 0,
+  // thic(10, 0-4)
+    0, 0, 0, 0, 0 ;
+
+ zpnd = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ rcan = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ scan = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ sno = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ albs = 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7 ;
+
+ rhos = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ gro = 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ;
+
+ soci = 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17 ;
+
+ gc = -1 ;
+
+ slope = 1, 2, 3, 4, 5, 6, 7, 8 ;
+
+ cmossmas = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ bleafmas =
+  // bleafmas(0, 0-8)
+    0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.00507949, 0.00289123,
+  // bleafmas(1, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // bleafmas(2, 0-8)
+    0, 0, 0, 0, 0, 0, 0.1, 0, 0,
+  // bleafmas(3, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // bleafmas(4, 0-8)
+    0, 0.1, 0.1, 0, 0, 0, 0.1, 0, 0,
+  // bleafmas(5, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // bleafmas(6, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // bleafmas(7, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // bleafmas(8, 0-8)
+    0, 0, 0, 0, 0, 0, 0.1, 0, 0,
+  // bleafmas(9, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // bleafmas(10, 0-8)
+    0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.00507949, 0.00289123 ;
+
+ dmoss = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ gleafmas =
+  // gleafmas(0, 0-8)
+    0.460540023832468, 0, 0.000146183, 2.74570991906122e-09, 1.59745e-05, 0, 
+    0, 0.000651167, 2.68272e-05,
+  // gleafmas(1, 0-8)
+    0.15, 0, 0, 0, 0, 0, 0, 0, 0,
+  // gleafmas(2, 0-8)
+    0, 0, 0, 0.2, 0, 0, 0.1, 0, 0,
+  // gleafmas(3, 0-8)
+    0.15, 0, 0, 0.2, 0, 0, 0, 0, 0, 
+    0, 0.000651167, 2.68272e-05,
+  // gleafmas(4, 0-8)
+    0, 0.1, 0.1, 0, 0, 0, 0.1, 0.15, 0,
+  // gleafmas(5, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0.1, 0,
+  // gleafmas(6, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0.1, 0,
+  // gleafmas(7, 0-8)
+    0, 0, 0, 0, 0, 0.08, 0.08, 0, 0,
+  // gleafmas(8, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0.1, 0,
+  // gleafmas(9, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // gleafmas(10, 0-8)
+    0.460540023832468, 0, 0.000146183, 2.74570991906122e-09, 1.59745e-05, 0, 
+    0, 0.000651167, 2.68272e-05 ;
+
+ ipeatland = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ lfstatus =
+  // lfstatus(0, 0-8)
+    2, 2, 2, 2, 2, 2, 2, 2, 2,
+  // lfstatus(1, 0-8)
+    2, 2, 2, 2, 2, 2, 2, 2, 2,
+  // lfstatus(2, 0-8)
+    2, 2, 2, 2, 2, 2, 2, 2, 2,
+  // lfstatus(3, 0-8)
+    2, 2, 2, 2, 2, 2, 2, 2, 2,
+  // lfstatus(4, 0-8)
+    2, 2, 2, 2, 2, 2, 2, 2, 2,
+  // lfstatus(5, 0-8)
+    2, 2, 2, 2, 2, 2, 2, 2, 2,
+  // lfstatus(6, 0-8)
+    2, 2, 2, 2, 2, 2, 2, 2, 2,
+  // lfstatus(7, 0-8)
+    2, 2, 2, 2, 2, 2, 2, 2, 2,
+  // lfstatus(8, 0-8)
+    2, 2, 2, 2, 2, 2, 2, 2, 2,
+  // lfstatus(9, 0-8)
+    2, 2, 2, 2, 2, 2, 2, 2, 2,
+  // lfstatus(10, 0-8)
+    2, 2, 2, 2, 2, 2, 2, 2, 2 ;
+
+ litrmass =
+  // litrmass(0, 0-10)
+    1.31881351442592, 0, 0.0796004, 0.779201569233866, 0.0809782, 0.204081, 
+    0, 0.198293, 0.192696, 0, 0,
+  // litrmass(1, 0-10)
+    1.2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // litrmass(2, 0-10)
+    0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0,
+  // litrmass(3, 0-10)
+    1.2, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0,
+  // litrmass(4, 0-10)
+    0, 0, 0, 0, 0, 0, 0, 1.1, 0, 0, 0,
+  // litrmass(5, 0-10)
+    0, 0, 0, 0, 0, 0, 0, 0.1, 0, 0, 0,
+  // litrmass(6, 0-10)
+    0, 0, 0, 0, 0, 0, 0, 0.1, 0, 0, 0,
+  // litrmass(7, 0-10)
+    0, 0, 0, 0, 0, 0, 0.05, 0.05, 0, 0, 0,
+  // litrmass(8, 0-10)
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // litrmass(9, 0-10)
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // litrmass(10, 0-10)
+    1.31881351442592, 0, 0.0796004, 0.779201569233866, 0.0809782, 0.204081, 
+    0, 0.198293, 0.192696, 0, 0 ;
+
+ litrmsmoss = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ pandays =
+  // pandays(0, 0-8)
+    7, 0, 0, 0, 0, 0, 0, 0, 0,
+  // pandays(1, 0-8)
+    7, 0, 0, 0, 0, 0, 0, 0, 0,
+  // pandays(2, 0-8)
+    7, 0, 0, 0, 0, 0, 0, 0, 0,
+  // pandays(3, 0-8)
+    7, 0, 0, 0, 0, 0, 0, 0, 0,
+  // pandays(4, 0-8)
+    7, 0, 0, 0, 0, 0, 0, 0, 0,
+  // pandays(5, 0-8)
+    7, 0, 0, 0, 0, 0, 0, 0, 0,
+  // pandays(6, 0-8)
+    7, 0, 0, 0, 0, 0, 0, 0, 0,
+  // pandays(7, 0-8)
+    7, 0, 0, 0, 0, 0, 0, 0, 0,
+  // pandays(8, 0-8)
+    7, 0, 0, 0, 0, 0, 0, 0, 0,
+  // pandays(9, 0-8)
+    7, 0, 0, 0, 0, 0, 0, 0, 0,
+  // pandays(10, 0-8)
+    7, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ rootmass =
+  // rootmass(0, 0-8)
+    1.9, 0, 0, 0, 0, 0, 0, 0, 0,
+  // rootmass(1, 0-8)
+    1.9, 0, 0, 0, 0, 0, 0, 0, 0,
+  // rootmass(2, 0-8)
+    0, 0, 0, 1.5, 0, 0, 0, 0, 0,
+  // rootmass(3, 0-8)
+    1.9, 0, 0, 1.5, 0, 0, 0, 0, 0,
+  // rootmass(4, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 1, 0,
+  // rootmass(5, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0.2, 0,
+  // rootmass(6, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0.2, 0,
+  // rootmass(7, 0-8)
+    0, 0, 0, 0, 0, 0.03, 0.03, 0, 0,
+  // rootmass(8, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // rootmass(9, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // rootmass(10, 0-8)
+    1.9, 0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ slopefrac =
+  // slopefrac(0, 0-7)
+    0, 0, 0, 0, 0, 0, 0, 0,
+  // slopefrac(1, 0-7)
+    0, 0, 0, 0, 0, 0, 0, 0,
+  // slopefrac(2, 0-7)
+    0, 0, 0, 0, 0, 0, 0, 0,
+  // slopefrac(3, 0-7)
+    0, 0, 0, 0, 0, 0, 0, 0,
+  // slopefrac(4, 0-7)
+    0, 0, 0, 0, 0, 0, 0, 0,
+  // slopefrac(5, 0-7)
+    0, 0, 0, 0, 0, 0, 0, 0,
+  // slopefrac(6, 0-7)
+    0, 0, 0, 0, 0, 0, 0, 0,
+  // slopefrac(7, 0-7)
+    0, 0, 0, 0, 0, 0, 0, 0,
+  // slopefrac(8, 0-7)
+    0, 0, 0, 0, 0, 0, 0, 0,
+  // slopefrac(9, 0-7)
+    0, 0, 0, 0, 0, 0, 0, 0,
+  // slopefrac(10, 0-7)
+    0, 0, 0, 0, 0, 0, 0, 0 ;
+
+ soilcmas =
+  // soilcmas(0, 0-10)
+    9.81761559806793, 0, 0.864307, 12.2324032558712, 0.834275, 0.198911, 0, 
+    2.51525, 2.34586, 0, 0,
+  // soilcmas(1, 0-10)
+    3.7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // soilcmas(2, 0-10)
+    0, 0, 0, 3.0, 0, 0, 0, 0, 0, 0, 0,
+  // soilcmas(3, 0-10)
+    3.7, 0, 0, 3.0, 0, 0, 0, 0, 0, 0, 0,
+  // soilcmas(4, 0-10)
+    0, 0, 0, 0, 0, 0, 0, 3.5, 0, 0, 0,
+  // soilcmas(5, 0-10)
+    0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0,
+  // soilcmas(6, 0-10)
+    0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0,
+  // soilcmas(7, 0-10)
+    0, 0, 0, 0, 0, 3.0, 3.0, 0, 0, 0, 0,
+  // soilcmas(8, 0-10)
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // soilcmas(9, 0-10)
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    9.81761559806793, 0, 0.864307, 12.2324032558712, 0.834275, 0.198911, 0, 
+    2.51525, 2.34586, 0, 0 ;
+
+ stemmass =
+  // stemmass(0, 0-8)
+    10.1855006596699, 0, 0.0478616, 5.73827865713517, 0.0441595, 0, 0, 0, 0,
+  // stemmass(1, 0-8)
+    7.3, 0, 0, 0, 0, 0, 0, 0.05, 0,
+  // stemmass(2, 0-8)
+    0, 0, 0, 7.0, 0, 0, 0, 0, 0,
+  // stemmass(3, 0-8)
+    7.3, 0, 0, 7.0, 0, 0, 0, 0, 0,
+  // stemmass(4, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // stemmass(5, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0.1, 0,
+  // stemmass(6, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0.1, 0,
+  // stemmass(7, 0-8)
+    0, 0, 0, 0, 0, 0.08, 0.08, 0, 0,
+  // stemmass(8, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0.1, 0,
+  // stemmass(9, 0-8)
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+  // stemmass(10, 0-8)
+    10.1855006596699, 0, 0.0478616, 5.73827865713517, 0.0441595, 0, 0, 0, 0 ;
+
+ maxAnnualActLyr = 4.1, 4.1, 4.1, 4.1, 4.1, 4.1, 4.1, 4.1, 4.1, 4.1, 4.1 ;
+
+ grwtheff =
+  // grwtheff(0, 0-8)
+    15.4601315164421, 100, 100, 23.7451730868207, 100, 100, 100, 100, 100,
+  // grwtheff(1, 0-8)
+    15.4601315164421, 100, 100, 23.7451730868207, 100, 100, 100, 100, 100,
+  // grwtheff(2, 0-8)
+    15.4601315164421, 100, 100, 23.7451730868207, 100, 100, 100, 100, 100,
+  // grwtheff(3, 0-8)
+    15.4601315164421, 100, 100, 23.7451730868207, 100, 100, 100, 100, 100,
+  // grwtheff(4, 0-8)
+    15.4601315164421, 100, 100, 23.7451730868207, 100, 100, 100, 100, 100,
+  // grwtheff(5, 0-8)
+    15.4601315164421, 100, 100, 23.7451730868207, 100, 100, 100, 100, 100,
+  // grwtheff(6, 0-8)
+    15.4601315164421, 100, 100, 23.7451730868207, 100, 100, 100, 100, 100,
+  // grwtheff(7, 0-8)
+    15.4601315164421, 100, 100, 23.7451730868207, 100, 100, 100, 100, 100,
+  // grwtheff(8, 0-8)
+    15.4601315164421, 100, 100, 23.7451730868207, 100, 100, 100, 100, 100,
+  // grwtheff(9, 0-8)
+    15.4601315164421, 100, 100, 23.7451730868207, 100, 100, 100, 100, 100,
+  // grwtheff(10, 0-8)
+    15.4601315164421, 100, 100, 23.7451730868207, 100, 100, 100, 100, 100 ;
+}

@@ -1,0 +1,66 @@
+<element name="variableSet" xmlns="http://relaxng.org/ns/structure/1.0">
+	<attribute name="type">
+		<text />
+	</attribute>
+	<attribute name="version">
+		<text />
+	</attribute>
+	<attribute name="created">
+		<text />
+	</attribute>
+	<oneOrMore>
+		<element name="group">
+			<attribute name="type">
+				<text />
+			</attribute>
+			<zeroOrMore>
+				<element name="variable">
+					<attribute name="id">
+						<text />
+					</attribute>
+					<attribute name="includeBareGround">
+						<text />
+					</attribute>
+					<element name="standardName">
+						<text />
+					</element>
+					<element name="longName">
+						<text />
+					</element>
+					<element name="shortName">
+						<text />
+					</element>
+					<element name="defaultUnits">
+						<text />
+					</element>
+					<zeroOrMore>
+						<element name="variant">
+							<element name="timeFrequency">
+								<text />
+							</element>
+							<element name="outputForm">
+								<text />
+							</element>
+							<element name="nameInCode">
+								<text />
+							</element>
+							<element name="units">
+								<text />
+							</element>
+							<optional>
+								<element name="comment">
+									<text />
+								</element>
+							</optional>
+						</element>
+					</zeroOrMore>
+					<optional>
+						<element name="comment">
+							<text />
+						</element>
+					</optional>
+				</element>
+			</zeroOrMore>
+		</element>
+	</oneOrMore>
+</element>

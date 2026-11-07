@@ -1,0 +1,372 @@
+&header
+ LAT=  49.00,          ! Latitude of the grid cell in degrees
+ LON=  -90.00,          ! Longitude of the grid cell in degrees
+ NMTEST= 2,             ! Number of tiles
+ IGND= 3,               ! Number of soil layers
+ ICAN= 4,               ! Number of physics (CLASS) PFTs. Make sure this matches what is in your run parameters namelist!
+ ICC= 9,                ! Number of biogeochemical (CTEM) PFTs. Make sure this matches what is in your run parameters namelist!
+ /
+
+&CLASSICVARS
+ 
+ !<Mosaic tile type identifier (1 for land surface, 0 for inland lake)
+ MIDROT(1)=   1,
+ MIDROT(2)=   1,
+
+ ! Fractional coverage of mosaic tile on modelled area. If nmtest = 1, then this should be 1.0.
+ FAREROT(1)=  0.7000     ,
+ FAREROT(2)=  0.3000     ,
+
+ ! Annual maximum fractional coverage of modelled area (read in for CLASS only runs), ignored for CTEM on runs. fcancmxrow used instead (see below)
+ FCANROT(1,1:5)=  0.00, 0.163, 0.023, 0.710 , 0.00,
+ FCANROT(2,1:5)=  0.00, 0.063, 0.023, 0.710 , 0.00,
+ 
+ ! Background average visible albedo of vegetation category [ ]
+ ALVCROT(1,1:5)= 5*0.0000       ,
+ ALVCROT(2,1:5)= 5*0.0000       ,
+ 
+ ! Background average near-infrared albedo of vegetation category [ ]
+ ALICROT(1,1:5)= 5*0.0000   ,
+ ALICROT(2,1:5)= 5*0.0000   ,
+ 
+ ! Minimum plant area index of vegetation category [ ]
+ PAMNROT(1,1:4)= 4*0.0000       ,
+ PAMNROT(2,1:4)= 4*0.0000       ,
+ 
+ ! Maximum plant area index of vegetation category [ ]
+ PAMXROT(1,1:4)= 4*0.0000       ,
+ PAMXROT(2,1:4)= 4*0.0000       ,
+
+ ! Natural logarithm of maximum vegetation roughness length [ ]
+ LNZ0ROT(1,1:5)= 5*0.0000       ,
+ LNZ0ROT(2,1:5)= 5*0.0000       ,
+
+ ! Maximum canopy mass for vegetation category [kg m^-2]
+ CMASROT(1,1:4)= 4*0.0000       ,
+ CMASROT(2,1:4)= 4*0.0000       ,
+ 
+ ! Maximum rooting depth of vegetation category [m]
+ ROOTROT(1,1:4)= 4*0.0000       ,
+ ROOTROT(2,1:4)= 4*0.0000       ,
+ 
+ ! Drainage index at bottom of soil profile [ ]
+ DRNROT(1)= 0.1000     ,
+ DRNROT(2)= 0.1000     ,
+ 
+ ! Soil permeable depth [m]
+ SDEPROT(1)=  1.7280     ,
+ SDEPROT(2)=  1.7280     ,
+
+ ! Overall thickness of soil layer [m] ! This is not a per tile quantity
+ DELZ(1:3)= 0.10, 0.25,  3.75,
+ 
+ ! Percentage sand content of soil
+ SANDROT(1,1:3)=  27.70,  26.70,  22.000,
+ SANDROT(2,1:3)=  47.70,  46.70,  42.000,
+ 
+ ! Percentage clay content of soil
+ CLAYROT(1,1:3)=  24.70,  27.20,  31.80,
+ CLAYROT(2,1:3)=  24.70,  27.20,  31.80,
+ 
+ ! Percentage organic matter content of soil
+ ORGMROT(1,1:3)=   1.10,   0.70,   0.30,
+ ORGMROT(2,1:3)=   1.10,   0.70,   0.30,
+ 
+ ! Temperature of soil layers [C]
+ TBARROT(1,1:3)=  20.851,  26.601,  27.820,
+ TBARROT(2,1:3)=  20.851,  26.601,  27.820,
+ 
+ ! Volumetric liquid water content of soil layers [m^3 m^-3]
+ THLQROT(1,1:3)=  0.043, 0.19401, 0.244,
+ THLQROT(2,1:3)=  0.043, 0.19401, 0.244,
+ 
+ ! Volumetric frozen water content of soil layers [m^3 m^-3]
+ THICROT(1,1:3)=  0.00, 0.00, 0.00,
+ THICROT(2,1:3)=  0.00, 0.00, 0.00,
+  
+ ! Vegetation canopy temperature [C]
+ TCANROT(1)=  11.740     ,
+ TCANROT(2)=  13.740     ,
+ 
+ ! Snowpack temperature [C]
+ TSNOROT(1)=  0.0000     ,
+ TSNOROT(2)=  0.0000     ,
+ 
+ ! Temperature of ponded water [C]
+ TPNDROT(1)=  0.0000     ,
+ TPNDROT(2)=  0.0000     ,
+ 
+ ! Depth of ponded water [m]
+ ZPNDROT(1)=  0.0000     ,
+ ZPNDROT(2)=  0.0000     ,
+ 
+ ! Intercepted liquid water stored on canopy [kg m^-2]
+ RCANROT(1)=  0.0000     ,
+ RCANROT(2)=  0.0000     ,
+ 
+ ! Intercepted frozen water stored on canopy [kg m^-2]
+ SCANROT(1)=  0.0000     ,
+ SCANROT(2)=  0.0000     ,
+ 
+ ! Mass of snow pack [kg m^-2]
+ SNOROT(1)=  0.0000     ,
+ SNOROT(2)=  0.0000     ,
+ 
+ ! Snow albedo [ ]
+ ALBSROT(1)=  0.0000     ,
+ ALBSROT(2)=  0.0000     ,
+ 
+ ! Density of snow [kg m^-3]
+ RHOSROT(1)=  0.0000     ,
+ RHOSROT(2)=  0.0000     ,
+ 
+ ! Vegetation growth index [ ]
+ GROROT(1)=  1.0000     ,
+ GROROT(2)=  1.0000     ,
+ 
+ ! Soil colour index [ ] (see CLASSIC manual)
+ SOCIROT(1)= 10,
+ SOCIROT(2)= 10,
+ 
+ ! The following four variables are not presently in use. Comment out as not needed to be in input file.
+ ! XSLPROT=  4.0001E-002,
+ ! GRKFROT= 0.29999999999999999     ,
+ ! WFSFROT=  2000.0     ,
+ ! WFCIROT=  1.0001E-005,
+ 
+ ! The following 6 variables are now read in from the model parameters namelist file. So commented out below.
+ !RSMNROT=  200.00,  125.00,  85.000,  100.00,
+ !QA50ROT=  30.00,  40.00, 30.00, 30.00,
+ !VPDAROT=  0.65, 0.50, 0.50, 0.50,
+ !VPDBROT=  1.05, 0.60, 1.00, 1.00,
+ !PSGAROT= 4*100.00       ,
+ !PSGBROT= 4*5.0000       ,
+
+ ! --------------------------------
+ ! CTEM (biogeochemical) variables:
+ 
+ ! Max. fractional coverage of CTEM's pfts, but this can be modified by land-use change, and competition between pfts (if they are turned on) 
+ fcancmxrow(1,1:9) = 0.3000, 3*0.0000, 0.0000, 0.1089, 0.17099, 0.12900, 0.0000,
+ fcancmxrow(2,1:9) = 0.0000, 3*0.0000, 0.0000, 0.1289, 0.17099, 0.32900, 0.37100,
+ 
+ ! Green leaf mass for each of the CTEM pfts [kg C m^-2 ]
+ gleafmasrow(1,1:9)= 4*0.0,  1.275E-003,  8.571E-002,  1.274E-002,  4.195E-004, 4.67E-002,
+ gleafmasrow(2,1:9)= 4*0.0,  1.275E-003,  8.571E-002,  1.274E-002,  4.195E-004, 4.67E-002,
+
+ ! Universal tracer for green leaf mass for each of the CTEM pfts [kg C m^-2 ]
+ !tracerGLeafMass(1,1:9)= 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+ !tracerGLeafMass(2,1:9)= 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+ 
+ ! Brown leaf mass for each of the CTEM pfts. Only used for grass PFTs, all others can be set to 0. [kg C m^-2 ]
+ bleafmasrow(1,1:9)= 7*0.0, 4.099E-003,  4.96E-002,
+ bleafmasrow(2,1:9)= 7*0.0, 4.099E-003,  4.96E-002,
+ 
+ ! Universal tracer for brown leaf mass for each of the CTEM pfts. Only used for grass PFTs. [kg C m^-2 ]
+ !tracerBLeafMass(1,1:9)= 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+ !tracerBLeafMass(2,1:9)= 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+ 
+ ! Stem mass for each of the CTEM pfts, grass should be set to 0. [kg C m^-2 ]
+ stemmassrow(1,1:9)= 4*0.0 ,  9.472E-002, 0.189,  4.185E-003, 2*0.0,
+ stemmassrow(2,1:9)= 4*0.0 ,  9.472E-002, 0.189,  4.185E-003, 2*0.0,
+
+ ! Universal tracer for stem mass for each of the CTEM pfts. [kg C m^-2 ]
+ !tracerStemMass(1,1:9)= 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+ !tracerStemMass(2,1:9)= 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+ 
+! Root mass for each of the CTEM pfts, [kg C m^-2 ]
+ rootmassrow(1,1:9)= 4*0.0,  8.07E-002,  4.437E-002,  2.6639E-003,  9.209E-002, 1.217,
+ rootmassrow(2,1:9)= 4*0.0,  8.07E-002,  4.437E-002,  2.6639E-003,  9.209E-002, 1.217,
+ 
+ ! Universal tracer for root mass for each of the CTEM pfts, [kg C m^-2 ]
+ !tracerRootMass(1,1:9)= 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+ !tracerRootMass(2,1:9)= 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+ 
+ ! Litter mass for each of the CTEM pfts, bare ground, and the land use change product pool  [kg C m^-2 ]
+  litrmassrow(1,1:9)= 0.0, 0.0, 0.0, 0.0, 0.298, 0.132, 1.43, 0.750, 0.645, 
+ ! FLAG: These are for per layer C 
+ !litrmassrow(1,1:9,1)= 0.0, 0.0, 0.0, 0.0, 0.298, 0.132, 1.43, 0.750, 0.645, 
+ !litrmassrow(1,1:9,2)= 0.0, 0.0, 0.0, 0.0, 0.198, 0.082, 0.63, 0.50, 0.45, 
+ !litrmassrow(1,1:9,3)= 0.0, 0.0, 0.0, 0.0, 0.08,  0.02,  0.3, 0.0, 0.005, 
+ !litrmassrow(2,1:9,1)= 0.0, 0.0, 0.0, 0.0, 0.298, 0.132, 1.43, 0.750, 0.645, 
+ !litrmassrow(2,1:9,2)= 0.0, 0.0, 0.0, 0.0, 0.198, 0.082, 0.63, 0.50, 0.45, 
+ !litrmassrow(2,1:9,3)= 0.0, 0.0, 0.0, 0.0, 0.08,  0.02,  0.3, 0.0, 0.005, 
+
+! Bareground is only used when competition or land use change creates bare ground Can otherwise be set to 0. (array position icc+1)
+ litrmassrow(1,10)=0.0,
+ ! FLAG: These are for per layer C 
+ !litrmassrow(1,10,1)=0.0,
+ !litrmassrow(1,10,2)=0.0,
+ !litrmassrow(1,10,3)=0.0,
+ !litrmassrow(2,10,1)=0.0,
+ !litrmassrow(2,10,2)=0.0,
+ !litrmassrow(2,10,3)=0.0,
+
+ ! The land use change product pool is only used when land use change is turned on. Can otherwise be set to 0. (array position icc+2)
+ litrmassrow(1,11)=0.0,
+ ! FLAG: These are for per layer C 
+ !litrmassrow(1,11,1)=0.0,
+ !litrmassrow(1,11,2)=0.0,
+ !litrmassrow(1,11,3)=0.0,
+ !litrmassrow(2,11,1)=0.0,
+ !litrmassrow(2,11,2)=0.0,
+ !litrmassrow(2,11,3)=0.0,
+
+ ! Universal tracer for litter mass for each of the CTEM pfts, bare ground, and the land use change product pool  [kg C m^-2 ]
+ !tracerLitrMass(1,1:9,1)= 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+ !tracerLitrMass(1,1:9,2)= 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+ !tracerLitrMass(1,1:9,3)= 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+ !tracerLitrMass(2,1:9,1)= 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+ !tracerLitrMass(2,1:9,2)= 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+ !tracerLitrMass(2,1:9,3)= 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+
+ ! Universal tracer for litter mass bareground. Only used when competition or land use change creates bare ground. (array position icc+1)
+ !tracerLitrMass(1,10,1)=1.0,
+ !tracerLitrMass(1,10,2)=1.0,
+ !tracerLitrMass(1,10,3)=1.0,
+ !tracerLitrMass(2,10,1)=1.0,
+ !tracerLitrMass(2,10,2)=1.0,
+ !tracerLitrMass(2,10,3)=1.0,
+
+ ! Universal tracer for litter mass. The land use change product pool is only used when land use change is turned on.(array position icc+2)
+ !tracerLitrMass(1,11,1)=1.0,
+ !tracerLitrMass(1,11,2)=1.0,
+ !tracerLitrMass(1,11,3)=1.0,
+ !tracerLitrMass(2,11,1)=1.0,
+ !tracerLitrMass(2,11,2)=1.0,
+ !tracerLitrMass(2,11,3)=1.0,
+
+ ! Soil carbon mass for each of the CTEM pfts, bare ground, and the land use change product pool  [kg C m^-2 ]
+ soilcmasrow(1,1:9)= 4*0.0,  0.298, 0.132,  1.43, 0.750, 0.645, 
+ ! FLAG: These are for per layer C 
+ !soilcmasrow(1,1:9,1)= 4*0.0,  0.298, 0.132,  1.43, 0.750, 0.645, 
+ !soilcmasrow(1,1:9,2)= 4*0.0,  0.298, 0.132,  1.43, 0.750, 0.645, 
+ !soilcmasrow(1,1:9,3)= 4*0.0,  0.298, 0.132,  1.43, 0.750, 0.645, 
+ !soilcmasrow(2,1:9,1)= 4*0.0,  0.298, 0.132,  1.43, 0.750, 0.645,
+ !soilcmasrow(2,1:9,2)= 4*0.0,  0.298, 0.132,  1.43, 0.750, 0.645,
+ !soilcmasrow(2,1:9,3)= 4*0.0,  0.298, 0.132,  1.43, 0.750, 0.645,
+ 
+ ! Bareground is only used when competition or land use change creates bare ground Can otherwise be set to 0. (array position icc+1)
+ soilcmasrow(1,10)=0.0,
+ ! FLAG: These are for per layer C 
+ !soilcmasrow(1,10,1)=0.0,
+ !soilcmasrow(1,10,2)=0.0,
+ !soilcmasrow(1,10,3)=0.0,
+ !soilcmasrow(2,10,1)=0.0,
+ !soilcmasrow(2,10,2)=0.0,
+ !soilcmasrow(2,10,3)=0.0,
+ 
+ ! The land use change product pool is only used when land use change is turned on. Can otherwise be set to 0. (array position icc+2)
+ soilcmasrow(1,11)=0.0,
+ ! FLAG: These are for per layer C 
+ !soilcmasrow(1,11,1)=0.0,
+ !soilcmasrow(1,11,2)=0.0,
+ !soilcmasrow(1,11,3)=0.0,
+ !soilcmasrow(2,11,1)=0.0,
+ !soilcmasrow(2,11,2)=0.0,
+ !soilcmasrow(2,11,3)=0.0,
+
+ ! Universal tracer for soil carbon mass for each of the CTEM pfts, bare ground, and the land use change product pool  [kg C m^-2 ]
+ !tracerSoilCMass(1,1:9,1)= 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+ !tracerSoilCMass(1,1:9,2)= 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+ !tracerSoilCMass(1,1:9,3)= 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+ !tracerSoilCMass(2,1:9,1)= 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+ !tracerSoilCMass(2,1:9,2)= 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+ !tracerSoilCMass(2,1:9,3)= 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+
+ ! Universal tracer for soil C. Bareground is only used when competition or land use change creates bare ground. (array position icc+1)
+ !tracerSoilCMass(1,10,1)=1.0,
+ !tracerSoilCMass(1,10,2)=1.0,
+ !tracerSoilCMass(1,10,3)=1.0,
+ !tracerSoilCMass(2,10,1)=1.0,
+ !tracerSoilCMass(2,10,2)=1.0,
+ !tracerSoilCMass(2,10,3)=1.0,
+
+ ! Universal tracer for soil C. The land use change product pool is only used when land use change is turned on. (array position icc+2)
+ !tracerSoilCMass(1,11,1)=1.0,
+ !tracerSoilCMass(1,11,2)=1.0,
+ !tracerSoilCMass(1,11,3)=1.0,
+ !tracerSoilCMass(2,11,1)=1.0,
+ !tracerSoilCMass(2,11,2)=1.0,
+ !tracerSoilCMass(2,11,3)=1.0,
+
+ ! Growth efficiency. Change in biomass per year per unit max. LAI,for use in mortality subroutine. Set to 100. which gives essentially no growth-related mortality in the first year. This variable is then updated annually so this value only affects the first year of the run.
+ grwtheffrow(1,1:9)= 9*100.,
+ grwtheffrow(2,1:9)= 9*100.,
+
+ ! Leaf phenology status [ ] (1 = max growth, 2 = normal growth, 3 = leaf fall, 4 = no leaves)
+ lfstatusrow(1,1:9)= 4*4,1,2*2, 2*1,
+ lfstatusrow(2,1:9)= 4*4,1,2*2, 2*1,
+ 
+ ! Days with positive net photosynthesis (An) for use in the phenology subroutine
+ pandaysrow(1,1:9)= 5*0, 2*7, 0, 7,
+ pandaysrow(2,1:9)= 5*0, 2*7, 0, 7,
+ 
+ ! Fraction of land flatter than slope thresholds (used in wetland determination scheme; 0.025, 0.05, 0.1, 0.15, 0.20, 0.25, 0.3 and 0.35 percent slope thresholds)
+ slopefrac(1,1:8)= 0., 0., 0., 0., 0., 0., 0., 0.,
+ slopefrac(2,1:8)= 0., 0., 0., 0., 0., 0., 0., 0.,
+ 
+ ! Peatland variables:
+ ! Peatland flag: 0 = not a peatland, 1= bog, 2 = fen
+ ipeatlandrow(1) = 0,
+ ipeatlandrow(2) = 0,
+ 
+ ! Carbon in moss biomass [kg C m^-2]
+ Cmossmas(1)= 0.,
+ Cmossmas(2)= 0.,
+ 
+ ! Universal tracer for carbon in moss biomass [kg C m^-2]
+ !tracerMossCMass(1)= 1.,
+ !tracerMossCMass(2)= 1.,
+
+ ! Moss litter mass [kg C m^-2]
+ litrmsmoss(1)= 0.,
+ litrmsmoss(2)= 0.,
+ 
+ ! Universal tracer for moss litter mass [kg C m^-2]
+ !tracerMossLitrMass(1)= 1.,
+ !tracerMossLitrMass(2)= 1.,
+ 
+ ! Depth of living moss [ m ]
+ dmoss(1)= 0.,
+ dmoss(2)= 0.,
+ 
+ ! Active layer depth maximum over the e-folding period specified by parameter eftime [m]. It will be calculated 
+ ! as the model runs so this value can just be set to some deep depth.
+ maxAnnualActLyr(1) = 999.,
+ maxAnnualActLyr(2) = 999.
+ 
+ ! The following vars are only used if competition between PFTs is turned on. You can leave these as is with inibioclim = .false. in the joboptions file. It will then take the first year of the run to determine some starting values. Later you can then take the restart file with the calculated bioclim values to start your next run within inibioclim = .true. You should also set start_bare=.true. as the pools in this example file are likely to cause a fail.
+ 
+ ! All are running averages in an e-folding sense. Only one value per grid cell (not per tile)
+ 
+ ! Temperature of the warmest month (PFTCompetition variable)(C) 
+ twarmm = -99., 
+ 
+ ! Temperature of the coldest month (PFTCompetition variable)(C) 
+ tcoldm = 99., 
+ 
+ ! Growing degree days above 5 C (PFTCompetition variable)
+ gdd5 = -99., 
+ 
+ ! Aridity index, ratio of potential evaporation to precipitation (PFTCompetition variable)
+ aridity = 99., 
+ 
+ ! Number of months in a year with surplus water i.e. precipitation more than potential evaporation (PFTCompetition variable)
+ srplsmon = -99.,
+ 
+ ! Number of months in a year with water deficit i.e. precipitation less than potential evaporation (PFTCompetition variable)
+ defctmon = -99.,
+ 
+ ! Annual water deficit (mm)
+ anndefct= 99.,
+ 
+ ! Annual water surplus (mm)
+ annsrpls= -99.,
+ 
+ ! Annual precipitation (mm)
+ annpcp,= -99.,
+ 
+ ! Annual maximum dry month length (months)
+ dry_season_length = -99.,
+ 
+ /

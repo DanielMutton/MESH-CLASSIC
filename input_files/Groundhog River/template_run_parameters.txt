@@ -1,0 +1,1261 @@
+&classicPFTbasic
+
+! In this header, the basic numbers of PFTs is listed. Below this initial namelist is the parameters for each PFT.
+
+! Number of PFTs considered by the physics subroutines. NOTE: The number specified here must match the data in your init netcdf file.
+ican = 4 ,    
+
+! Number of CTEM level PFTs. NOTE: The number specified here must match the data in your init netcdf file.
+icc = 9 ,           
+
+! Maximum number of level 2 CTEM PFTs. This is the maximum number of CTEM PFTs associated with a single CLASS PFT.
+l2max = 3 ,         
+
+/
+
+&classicparams
+
+! This file contains all of the CTEM parameters that are read in by
+! readin_params in the classic_params.f90 file. The format is a fortran
+! namelist. It ignores anything after a '!'. The array syntax is not the
+! same as usual fortran. It is presently set up so it is easy to see how
+! the CTEM level PFT values correspond to the CLASS level ones. Pay attention
+! to the commas at the end of a declaration. You can use scientific notation (E)
+! The order of parameters does not have to match that in the code but the parameter
+! names must match. It stops reading when it encounters a '/'
+
+! ---------
+
+! Description of the PFTs used [both physics only (CLASS) and with biogeochemistry (CTEM on) runs]
+! **Note: for competition, tree and grass should be placed in a contiguous block. So don't put
+! {trees, crops, tree, grass, tree, grass} as that will break the logic.
+
+! modelpft assigns the PFTs to their position in the kk sized matrix for CLASS and CTEM:
+modelpft(1:3)  = 1,     1,     0,      ! CLASS PFT 1 NDL (NdlTr)
+!               EVG    DCD
+modelpft(4:6) = 1,     1,     1,       ! CLASS PFT 2 BDL (BdlTr)
+!               EVG  DCD-CLD DCD-DRY
+modelpft(7:9)= 1,     1,     0,        ! CLASS PFT 3 CROP (Crop)
+!               C3      C4
+modelpft(10:12)= 1,     1,   0,   ! CLASS PFT 4 GRASS (Grass)
+!              C3      C4
+
+! List of CLASS-level PFTs
+classpfts = 'NdlTr' , 'BdlTr', 'Crops', 'Grass',
+
+! List of CTEM PFTs
+! **Note: 'BdlDCoTr' should be specified before 'BdlDDrTr' due to some code in competition.
+! As well, specify the crops and the grasses in contiguous blocks with crops before grasses.
+ctempfts = 'NdlEvgTr' , 'NdlDcdTr', 'BdlEvgTr','BdlDCoTr', 'BdlDDrTr','CropC3  ','CropC4  ','GrassC3 ','GrassC4 ',
+
+! Array telling which vegetation type is c4
+isc4(1:3)  = .false., .false., .false.,
+isc4(4:6)  = .false., .false., .false.,
+isc4(7:9)  = .false., .true., .false.,
+isc4(10:12)= .false., .true., .false.,
+
+! Physics (CLASS) parameters:
+
+! Von Karman Constant (-)
+VKC = 0.40,
+
+! Drag Coefficient for water (-)
+CT =  1.15E-3,
+
+! Minimum wind speed (m s^{-1})
+VMIN = 0.1,
+
+! Thermal conductivity of water ($W m^{-1} K^{-1} $)
+TCW = 0.57,
+
+! Thermal conductivity of ice  ($W m^{-1} K^{-1} $)
+TCICE = 2.24,
+
+! Thermal conductivity of sand particles  ($W m^{-1} K^{-1} $)
+TCSAND = 2.5, 
+
+! Thermal conductivity of fine mineral particles  ($W m^{-1} K^{-1} $)
+TCCLAY = 2.5,
+
+! Thermal conductivity of organic matter  ($W m^{-1} K^{-1} $)
+TCOM = 0.25,
+
+! Thermal conductivity of dry mineral soil  ($W m^{-1} K^{-1} $)
+TCDRYS = 0.275,
+
+! Particle density of soil mineral matter ($kg m^{-3}$)
+RHOSOL = 2.65E3,
+
+! Particle density of soil organic matter ($kg m^{-3}$)
+RHOOM = 1.30E3,
+
+! Volumetric heat capacity of water ($J m^{-3} K^{-1}$)
+HCPW = 4.187E6,
+
+! Volumetric heat capacity of ice ($J m^{-3} K^{-1}$)
+HCPICE = 1.9257E6,
+
+! Volumetric heat capacity of mineral matter ($J m^{-3} K^{-1}$)
+HCPSOL = 2.25E6,
+
+! Volumetric heat capacity of organic matter ($J m^{-3} K^{-1}$)
+HCPOM = 2.50E6,
+
+! Volumetric heat capacity of sand particles ($J m^{-3} K^{-1}$)
+HCPSND = 2.13E6,
+
+! Volumetric heat capacity of fine mineral particles ($J m^{-3} K^{-1}$)
+HCPCLY = 2.38E6,
+
+! Specific heat of water ($J kg^{-1} K^{-1}$)
+SPHW = 4.186E3,
+
+! Specific heat of ice  ($J kg^{-1} K^{-1}$)
+SPHICE = 2.10E3,
+
+! Specific heat of vegetation matter  ($J kg^{-1} K^{-1}$)
+SPHVEG = 2.70E3,
+
+! Density of water ($kg m^{-3}$) 
+RHOW = 1.0E3,
+
+! Density of ice ($kg m^{-3}$)
+RHOICE = 0.917E3,
+
+! Thermal conductivity of ice sheets ($W m^{-1} K^{-1}$)
+TCGLAC = 2.24,
+
+! Latent heat of freezing of water ($J kg^{-1}$)
+CLHMLT = 0.334E6,
+
+! Latent heat of vaporization of water ($J kg^{-1}$)
+CLHVAP = 2.501E6,
+
+! Natural log of roughness length of soil (-)
+ZOLNG = -4.605,
+
+! Natural log of roughness length of snow (-)
+ZOLNS = -6.908,
+
+! Natural log of roughness length of ice (-)
+ZOLNI = -6.215,
+
+! Ratio of soil roughness length for momentum to roughness length for heat (-)
+ZORATG = 3.0,
+
+! Visible albedo of ice (-)
+ALVSI = 0.95,
+
+! Near-infrared albedo of ice (-)      
+ALIRI = 0.73,
+
+! Visible albedo of organic matter (-)
+ALVSO = 0.05,
+
+! Near-infrared albedo of organic matter (-)
+ALIRO = 0.30,
+
+! Albedo of rock (-)
+ALBRCK = 0.16,
+
+!< The crop growth descriptor array (see APREP.f for description)
+GROWYR(1:9,1,1)   = 213.,213.,213.,213.,213.,213.,0.,0.,0.,
+GROWYR(10:18,1,1) = 0.,0.,0., 75.,106.,136.,167.,167.,167.,
+
+GROWYR(1:9,2,1)   = 273.,273.,273.,273.,273.,273.,0.,0.,0.,
+GROWYR(10:18,2,1) = 0.,0.,0.,135.,166.,196.,196.,196.,196.,
+
+GROWYR(1:9,3,1)   = 121.,121.,121.,121.,121.,121.,0.,0.,0.,
+GROWYR(10:18,3,1) = 0.,0.,0.,275.,244.,214.,214.,214.,214.,
+
+GROWYR(1:9,4,1)   = 151.,151.,151.,151.,151.,151.,0.,0.,0.,
+GROWYR(10:18,4,1) = 0.,0.,0.,305.,274.,244.,244.,244.,244.,
+
+GROWYR(1:9,1,2)   = 213.,213.,213.,213.,213.,213.,0.,0.,0.,
+GROWYR(10:18,1,2) = 0.,0., 75.,106.,136.,167.,167.,167.,167.,
+
+GROWYR(1:9,2,2)   = 273.,273.,273.,273.,273.,273.,0.,0.,0.,
+GROWYR(10:18,2,2) = 0.,0.,135.,166.,196.,196.,196.,196.,196.,
+
+GROWYR(1:9,3,2)   = 121.,121.,121.,121.,121.,121.,0.,0.,0.,
+GROWYR(10:18,3,2) = 0.,0.,275.,244.,214.,214.,214.,214.,214.,
+
+GROWYR(1:9,4,2)   = 151.,151.,151.,151.,151.,151.,0.,0.,0.,
+GROWYR(10:18,4,2) = 0.,0.,305.,274.,244.,244.,244.,244.,244., 
+
+! The ratio of the roughness length for momentum to the roughness length for heat
+ZORAT =  1.0, 1.0, 1.0, 1.0,
+
+! Attenuation coefficient used in calculating the sky view factor for vegetation canopies (variable c in the documentation for subroutine CANALB)
+CANEXT = -0.5, -1.5, -0.8, -0.8,
+
+! Leaf dimension factor used in calculating the leaf boundary resistance (variable Cl in the documentation for subroutine APREP)
+XLEAF = 0.0247, 0.0204, 0.0456, 0.0456,
+
+! Minimum stomatal resistance of vegetation category \f$[s m^{-1}] (r_{s,min})\f$ (**IGNORED if CTEM is on**)
+RSMN=  200.00,  125.00,  85.000,  100.00,
+
+! Reference value of incoming shortwave radiation for vegetation category (used in stomatal 
+!resistance calculation) [W m^{-2}]  (**IGNORED if CTEM is on**)
+QA50 =  30.00,  40.00, 30.00, 30.00,
+
+! Vapour pressure deficit coefficient for vegetation category (used in stomatal 
+! resistance calculation) [ - ]  (**IGNORED if CTEM is on**)       
+VPDA =  0.65, 0.50, 0.50, 0.50,
+
+! Vapour pressure deficit coefficient for vegetation category (used in stomatal 
+! resistance calculation) [ - ]  (**IGNORED if CTEM is on**)       
+VPDB =  1.05, 0.60, 1.00, 1.00,
+
+! Soil moisture suction coefficient for vegetation category (used in stomatal 
+! resistance calculation) [ - ](**IGNORED if CTEM is on**)       
+PSGA = 100.00, 100.00, 100.00, 100.00 ,
+
+! Soil moisture suction coefficient for vegetation category (used in stomatal 
+! resistance calculation) [ - ](**IGNORED if CTEM is on**)       
+PSGB = 5.0000, 5.0000, 5.0000, 5.0000 ,
+
+! Six hydraulic parameters associated with the three basic types of organic soils (fibric, hemic and sapric). Values are derived from the work of Letts et al. (2000)
+
+! Organic soils (peat) pore volume \f$[m^3 m^{-3} ] ( \theta_p )\f$
+THPORG = 0.93, 0.88, 0.83,
+
+! Peat liquid water retention capacity for organic soil \f$[m^3 m^{-3} ] (\theta_{ret} )\f$
+THRORG = 0.275, 0.620, 0.705,
+
+! Peat residual soil liquid water content remaining after freezing or evaporation \f$[m^3 m^{-3} ] (\theta_{min} )\f$
+THMORG = 0.04, 0.15, 0.22,
+
+! Clapp and Hornberger 'b' value for peat soils [ ]
+BORG = 2.7, 6.1, 12.0,
+
+! Peat soil moisture suction at saturation [m] \f$(\Psi_{sat} )\f$
+PSISORG = 0.0103, 0.0102, 0.0101,
+
+! Peat hydraulic conductivity of soil at saturation \f$[m s^{-1} ] (K_{sat} )\f$
+GRKSORG = 2.8E-4, 2.0E-6, 1.0E-7,
+
+! The next parameters are normally assigned in the GCM but need to be assigned here since this 
+! is an offline run. The names used below are the same as those in the GCM.
+
+! Model physics timestep (s) 
+DELT = 1800.0,
+
+! CANALB parameters:
+
+  ! Average background visible albedo of snow covered canopy (-)
+  ALVSWC = 0.27,     
+
+  ! Average background NIR albedo of snow covered canopy (-)
+  ALIRWC = 0.38,     
+
+  ! Effective overall exctinction coefficient given if visible transmissivity is very small
+  CXTLRG = 1.0E20,   
+
+! CLASSB parameters: 
+
+  ! Look up tables for wet (w) and dry (d) visible (v) and NIR (n) soil albedos based on soil colour index 
+  ALWV(1:10)  = 0.25,0.23,0.21,0.20,0.19,0.18,0.17,0.16,0.15,0.14,
+  ALWV(11:20) = 0.13,0.12,0.11,0.10,0.09,0.08,0.07,0.06,0.05,0.04,
+  ALWN(1:10)  = 0.50,0.46,0.42,0.40,0.38,0.36,0.34,0.32,0.30,0.28,
+  ALWN(11:20) = 0.26,0.24,0.22,0.20,0.18,0.16,0.14,0.12,0.10,0.08,
+  ALDV(1:10)  = 0.36,0.34,0.32,0.31,0.30,0.29,0.28,0.27,0.26,0.25,
+  ALDV(11:20) = 0.24,0.23,0.22,0.20,0.18,0.16,0.14,0.12,0.10,0.08,
+  ALDN(1:10)  = 0.61,0.57,0.53,0.51,0.49,0.48,0.45,0.43,0.41,0.39,
+  ALDN(11:20) = 0.37,0.35,0.33,0.31,0.29,0.27,0.25,0.23,0.21,0.16,
+
+! SNINFL parameters:
+
+  ! Maximum water retention capacity of the snow pack (weight percentage)
+  WSNCAP = 0.04, 
+  
+! Four-band albedo parameters:
+
+  ! "climatological" snow grain size, SSA = 60 m^2/kg   
+  REFF0_LAND = 5.452563E-5, 
+  
+  ZSNMIN=5.E-2,          !FLAG - JM adding in Jason Cole's Albedo.
+  ZSNMAX2=25.E-2,        !FLAG - JM adding in Jason Cole's Albedo.                 
+  
+  ! Only needed when BCCONC is turned on.
+  ! #  if defined (pla)
+  !REAL, PARAMETER :: ZSNMIN=5.E-2,ZSNMAX1=20.E-2,ZSNMAX2=25.E-2
+  ! #  else
+  ! REAL, PARAMETER :: ZSNMIN=5.E-2,ZSNMAX1=10.E-2,ZSNMAX2=25.E-2
+  ! #  endif
+
+! -------------------------------------
+
+! Biogeochemical (CTEM) parameters
+
+!Canopy light/nitrogen extinction coefficient
+kn(1:3)    =0.50, 0.50, 0.00,
+kn(4:6)   =0.50, 0.50, 0.50,
+kn(7:9)  =0.40, 0.48, 0.00,
+kn(10:12)  =0.46, 0.44, 0.00,
+
+!Allocation parameters:
+
+    !omega, Parameter used in allocation formulae (prescribed run values!)
+    omega(1:3)   =  0.80, 0.50, 0.00,
+    omega(4:6)  =  0.80, 0.80, 0.80,
+    omega(7:9) =  0.05, 0.05, 0.00,
+    omega(10:12) =  1.00, 1.00, 0.00,
+
+    !omega, Parameter used in allocation formulae (competition run values!)
+    omega_compete(1:3)   =  0.80, 0.50, 0.00,
+    omega_compete(4:6)  =  0.80, 0.45, 0.80,
+    omega_compete(7:9) =  0.05, 0.05, 0.00,
+    omega_compete(10:12) =  1.00, 1.00, 0.00,
+
+    !epsilon_l, Parameter used in allocation formulae (prescribed run values!)
+    epsilonl(1:3)     =  0.20, 0.06, 0.00,
+    epsilonl(4:6)    =  0.35, 0.35, 0.25,
+    epsilonl(7:9)   =  0.80, 0.80, 0.00,
+    epsilonl(10:12)   =  0.01, 0.01, 0.00,
+
+    !epsilon_l, Parameter used in allocation formulae (competition run values!)
+    epsilonl_compete(1:3)   =  0.19, 0.45, 0.00,
+    epsilonl_compete(4:6)  =  0.39, 0.50, 0.30,
+    epsilonl_compete(7:9) =  0.80, 0.80, 0.00,
+    epsilonl_compete(10:12) =  0.10, 0.10,  0.00,
+
+    !epsilon_s, Parameter used in allocation formulae (prescribed run values!)
+    epsilons(1:3)     =  0.15, 0.05, 0.00,
+    epsilons(4:6)    =  0.05, 0.10, 0.10,
+    epsilons(7:9)   =  0.15, 0.15, 0.00,
+    epsilons(10:12)   =  0.00, 0.00, 0.00,
+
+    !epsilon_s, Parameter used in allocation formulae (competition run values!)
+    epsilons_compete(1:3)     =  0.40, 0.34, 0.00,
+    epsilons_compete(4:6)    =  0.21, 0.35, 0.10,
+    epsilons_compete(7:9)   =  0.15, 0.15, 0.00,
+    epsilons_compete(10:12)   =  0.00, 0.00, 0.00,
+
+    !epsilon_r, Parameter used in allocation formulae (prescribed run values!)
+    epsilonr(1:3)     =  0.65, 0.89, 0.00,
+    epsilonr(4:6)    =  0.60, 0.55, 0.65,
+    epsilonr(7:9)   =  0.05, 0.05, 0.00,
+    epsilonr(10:12)   =  0.99, 0.99, 0.00,
+
+    !epsilon_r, Parameter used in allocation formulae (competition run values!)
+    epsilonr_compete(1:3)     =  0.41, 0.21, 0.00,
+    epsilonr_compete(4:6)    =  0.40, 0.15, 0.60,
+    epsilonr_compete(7:9)   =  0.05, 0.05, 0.00,
+    epsilonr_compete(10:12)   =  0.90, 0.90, 0.00,
+
+    !Minimum root:shoot ratio mostly for support and stability
+    rtsrmin(1:3)     =  0.16, 0.16, 0.00,
+    rtsrmin(4:6)    =  0.16, 0.16, 0.32,
+    rtsrmin(7:9)   =  0.16, 0.16, 0.00,
+    rtsrmin(10:12)   =  0.50, 0.50, 0.00,
+
+    !Allocation to leaves during leaf onset
+    aldrlfon(1:3)     =  1.00, 1.00, 0.00,
+    aldrlfon(4:6)    =  1.00, 1.00, 1.00,
+    aldrlfon(7:9)   =  1.00, 1.00, 0.00,
+    aldrlfon(10:12)   =  1.00, 1.00, 0.00,
+
+    !Constant allocation fractions to leaves if not using dynamic allocation. (NOT thoroughly tested, and using dynamic allocation is preferable)
+    caleaf(1:3)     =  0.275, 0.300, 0.000,
+    caleaf(4:6)    =  0.200, 0.250, 0.250,
+    caleaf(7:9)   =  0.400, 0.400, 0.000,
+    caleaf(10:12)   =  0.450, 0.450, 0.000,
+
+    !Constant allocation fractions to stem if not using dynamic allocation. (NOT thoroughly tested, and using dynamic allocation is preferable)
+    castem(1:3)     =  0.475, 0.450, 0.000,
+    castem(4:6)    =  0.370, 0.400, 0.400,
+    castem(7:9)   =  0.150, 0.150, 0.000,
+    castem(10:12)   =  0.000, 0.000, 0.000,
+
+    !Constant allocation fractions to roots if not using dynamic allocation. (NOT thoroughly tested, and using dynamic allocation is preferable)
+    caroot(1:3)     =  0.250, 0.250, 0.000,
+    caroot(4:6)    =  0.430, 0.350, 0.350,
+    caroot(7:9)   =  0.450, 0.450, 0.000,
+    caroot(10:12)   =  0.550, 0.550, 0.000,
+
+! bio2str.f parameters: ---------
+
+    !> parameter determining average root profile
+    abar(1:3)     =  4.70, 5.86, 0.00,
+    abar(4:6)    =  3.87, 3.46, 3.97,
+    abar(7:9)   =  3.97, 3.97, 0.00,
+    abar(10:12)   =  5.86, 4.92, 0.00,
+
+    !> average root biomass (kg c/m2) for ctem's 8 pfts used for estimating rooting profile
+    avertmas(1:3)     =  1.85, 1.45, 0.00,
+    avertmas(4:6)    =  2.45, 2.10, 2.10,
+    avertmas(7:9)   =  0.10, 0.10, 0.00,
+    avertmas(10:12)   =  0.70, 0.70,  0.00,
+
+    !> parameter determining how the roots grow
+    alpha(1:3)     =  0.80, 0.80, 0.00,
+    alpha(4:6)    =  0.80, 0.80, 0.80,
+    alpha(7:9)   =  0.80, 0.80, 0.00,
+    alpha(10:12)   =  0.80, 0.80, 0.00,
+
+    !> storage/imaginary lai is this percentage of maximum leaf area index that a given root+stem biomass can support
+    prcnslai(1:3)     =  7.5, 7.5, 0.0,
+    prcnslai(4:6)    =  7.5, 7.5, 7.5,
+    prcnslai(7:9)   =  7.5, 7.5, 0.0,
+    prcnslai(10:12)   =  2.5, 2.5, 0.0,
+
+    !> minimum storage lai. this is what the model uses as lai when growing vegetation for scratch. consider these as model seeds.
+    minslai(1:3)     =  0.3, 0.3, 0.0,
+    minslai(4:6)    =  0.3, 0.3, 0.3,
+    minslai(7:9)   =  0.2, 0.2, 0.0,
+    minslai(10:12)   =  0.2, 0.2, 0.0,
+
+    !> maximum rooting depth. this is used so that the rooting depths simulated by ctem's variable rooting depth parameterzation are
+    !> constrained to realistic values visible and near ir albedos of the 9 ctem pfts
+    mxrtdpth(1:3)     =  3.00, 3.00, 0.00,
+    mxrtdpth(4:6)    =  5.00, 5.00, 3.00,
+    mxrtdpth(7:9)   =  2.00, 2.00, 0.00,
+    mxrtdpth(10:12)   =  1.00, 1.00, 0.00,
+
+    !> visible albedos of the 9 ctem pfts
+    albvis(1:3)     =  3.00, 3.00, 0.00,
+    albvis(4:6)    =  3.00, 5.00, 5.00,
+    albvis(7:9)   =  5.50, 5.50, 0.00,
+    albvis(10:12)   =  5.00, 6.00, 0.00,
+
+    !> near IR albedos of the 9 ctem pfts
+    albnir(1:3)     =  19.0, 19.0, 0.00,
+    albnir(4:6)    =  23.0, 29.0, 29.0,
+    albnir(7:9)   =  34.0, 34.0, 0.00,
+    albnir(10:12)   =  30.0, 34.0, 0.00,
+
+!! competition_mod.f90 parameters: ------
+
+    !! the model basically uses the temperature of the coldest month as
+    !! the major constraint for pft distribution. a range of the coldest
+    !! month temperature is prescribed for each pft within which pfts are
+    !! allowed to exist. in addition for tropical broadleaf drought
+    !! deciduous trees measure(s) of aridity (function of precipitation
+    !! and potential evaporation) are used.
+
+    ! existence subroutine:
+
+    !> minimum coldest month temperature
+    tcoldmin(1:3)     =  -999.9, -999.9,   0.0,
+    tcoldmin(4:6)    =  2.5,  -35.0,   4.0,
+    tcoldmin(7:9)   =  -999.9, -999.9,   0.0,
+    tcoldmin(10:12)   =  -999.9, -999.9, 0.0,
+
+    !> maximum coldest month temperature
+    tcoldmax(1:3)     =  18.0,  -28.0,   0.0,
+    tcoldmax(4:6)    =  999.9,   16.0, 900.0,
+    tcoldmax(7:9)   =  999.9,  999.9,   0.0,
+    tcoldmax(10:12)   =  999.9,  999.9,   0.0,
+
+    !> maximum warmest month temperature
+    twarmmax(1:3)     =  99.9,  25.0,  0.0,
+    twarmmax(4:6)    =  99.9,  99.9, 99.9,
+    twarmmax(7:9)   =  99.9,  99.9,  0.0,
+    twarmmax(10:12)   =  99.9,  99.9, 0.0,
+
+    !> minimum gdd above 5 c required to exist
+    gdd5lmt(1:3)     =  375.0,  600.0,  0.0,
+    gdd5lmt(4:6)    =  1200.0,  300.0,  9.9,
+    gdd5lmt(7:9)   =  9.9,    9.9,  0.0,
+    gdd5lmt(10:12)   =  9.9,    9.9,  0.0,
+
+    !> aridity index limit for broadleaf drought/dry deciduous trees
+    aridlmt(1:3)     = 9.9,  9.9,  0.0,
+    aridlmt(4:6)    = 9.9,  9.9,  0.9,
+    aridlmt(7:9)   = 9.9,  9.9,  0.0,
+    aridlmt(10:12)   = 9.9,  9.9,  0.0,
+
+    !> minimum length of dry season for PFT to exist
+    dryseasonlmt(1:3)     = 9.0,  99.9,    0.0,
+    dryseasonlmt(4:6)    = 99.9,  99.9,    5.5,
+    dryseasonlmt(7:9)   = 99.9,  99.9,    0.0,
+    dryseasonlmt(10:12)   = 99.9,  99.9,   0.0,
+
+    !> multiplying factor for converting biomass density to sapling density
+    ! smaller numbers give faster colonization rates.
+    bio2sap(1:3)     = 0.32, 0.20, 0.00,
+    bio2sap(4:6)    = 0.08, 0.14, 0.13,
+    bio2sap(7:9)   = 0.00, 0.00, 0.00,
+    bio2sap(10:12)   = 0.20, 0.20, 0.00,
+
+    !< mortality rate (1/year) for pfts that no longer exist within their pre-defined bioclimatic range
+    bioclimrt = 0.25,
+
+! ctem.f parameters: ----------
+
+    !> Growth respiration coefficient
+    grescoef(1:3)     = 0.15, 0.15, 0.00,
+    grescoef(4:6)    = 0.15, 0.15, 0.15,
+    grescoef(7:9)   = 0.15, 0.15, 0.00,
+    grescoef(10:12)   = 0.15, 0.15, 0.00,
+
+    !> Humification factor - used for transferring carbon from litter into soil c pool
+    humicfac(1:3)     = 0.42, 0.42, 0.00,
+    humicfac(4:6)    = 0.53, 0.48, 0.48,
+    humicfac(7:9)   = 0.10, 0.10, 0.00,
+    humicfac(10:12)   = 0.42, 0.42, 0.00,
+
+    !> Humification factor - used for transferring carbon from litter into soil c pool. This is the
+    !! value used for bare ground or LUC pools.
+    humicfac_bg = 0.45,
+
+    !> Minimum lai below which a pft doesn't expand
+    laimin(1:3)     = 2.0,   2.0,  0.0,
+    laimin(4:6)    = 1.5,   1.0,  1.0,
+    laimin(7:9)   = 1.0,   1.0,  0.0,
+    laimin(10:12)   = 0.01, 0.01, 0.0,
+
+    !> Maximum lai above which a pft always expands and lambdamax fraction of npp is used for expansion
+    laimax(1:3)     = 6.0, 6.0, 0.0,
+    laimax(4:6)    = 8.0, 8.0, 8.0,
+    laimax(7:9)   = 8.0, 8.0, 0.0,
+    laimax(10:12)   = 4.0, 4.0, 0.0,
+
+    !< Max. fraction of npp that is allocated for reproduction/colonization
+    lambdamax      = 0.10,
+
+    !< Fraction of NPP that is used to create reproductive tissues
+    repro_fraction = 0.10,
+
+! disturbance parameters: ------------
+
+    !< min. and max. vegetation biomass thresholds to initiate fire, \f$kg c/m^2\f$
+    bmasthrs_fire = 0.4, 1.2,
+
+    !< extinction moisture content for estimating vegetation fire likeliness due to soil moisture
+    extnmois_veg  = 0.3,
+
+    !< extinction moisture content for estimating duff layer fire likeliness due to soil moisture
+    extnmois_duff = 0.5,
+
+    !< lower cloud-to-ground lightning threshold for fire likelihood flashes/km^2.year ! FireMIP value: 0.025
+    lwrlthrs      = 0.25,
+
+    !< higher cloud-to-ground lightning threshold for fire likelihood flashes/km^2.year ! FireMIP value: 1.0
+    hgrlthrs      = 10.0,
+
+    !>parameter m (mean) and b of logistic distribution used for \n
+    !>**Parmlght was increased to 0.8 to make it so areas with higher amounts of
+    !>lightning have higher lterm. The saturation is still the same, but the
+    !>increase is more gradual at low lightning density. JM
+    parmlght    = 0.8,
+    parblght    = 0.1,    !< estimating fire likelihood due to lightning
+
+    !< typical area representing ctem's fire parameterization (km2) ! FireMIP value: 300.0
+    reparea     = 500.0,
+
+    !< threshold of population density (people/km2) [Kloster et al., biogeosci. 2010]
+    popdthrshld = 300.0,
+
+    !< Fire spread rate in the absence of wind
+    f0 = 0.05,
+
+    !> max. fire spread rate, km/hr
+    maxsprd(1:3)     = 0.38, 0.38, 0.00,
+    maxsprd(4:6)    = 0.28, 0.28, 0.28,
+    maxsprd(7:9)   = 0.00, 0.00, 0.00,
+    maxsprd(10:12)   = 0.51, 0.75, 0.00,
+
+    !> fraction of green leaf biomass converted to gases due to combustion
+    frco2glf(1:3)     = 0.42, 0.42, 0.00,
+    frco2glf(4:6)    = 0.42, 0.42, 0.42,
+    frco2glf(7:9)   = 0.00, 0.00, 0.00,
+    frco2glf(10:12)   = 0.48, 0.48, 0.00,
+
+    !> fraction of brown leaf biomass converted to gases due to combustion
+    frco2blf(1:3)     = 0.00, 0.00, 0.00,
+    frco2blf(4:6)    = 0.00, 0.00, 0.00,
+    frco2blf(7:9)   = 0.00, 0.00, 0.00,
+    frco2blf(10:12)   = 0.54, 0.54, 0.00,
+
+    !> fraction of green leaf biomass becoming litter after combustion
+    frltrglf(1:3)     = 0.20, 0.20, 0.00,
+    frltrglf(4:6)    = 0.20, 0.20, 0.20,
+    frltrglf(7:9)   = 0.00, 0.00, 0.00,
+    frltrglf(10:12)   = 0.10, 0.10, 0.00,
+
+    !> fraction of brown leaf biomass becoming litter after combustion
+    frltrblf(1:3)     = 0.00, 0.00, 0.00,
+    frltrblf(4:6)    = 0.00, 0.00, 0.00,
+    frltrblf(7:9)   = 0.00, 0.00, 0.00,
+    frltrblf(10:12)   = 0.06, 0.06, 0.00,
+
+    !> fraction of stem biomass converted to gases due to combustion
+    frco2stm(1:3)     = 0.12, 0.12, 0.00,
+    frco2stm(4:6)    = 0.12, 0.06, 0.06,
+    frco2stm(7:9)   = 0.00, 0.00, 0.00,
+    frco2stm(10:12)   = 0.00, 0.00, 0.00,
+
+    !> fraction of stem biomass becoming litter after combustion
+    frltrstm(1:3)     = 0.60, 0.60, 0.00,
+    frltrstm(4:6)    = 0.60, 0.40, 0.40,
+    frltrstm(7:9)   = 0.00, 0.00, 0.00,
+    frltrstm(10:12)   = 0.00, 0.00, 0.00,
+
+    !> fraction of root biomass converted to gases due to combustion
+    frco2rt(1:3)     = 0.0, 0.0, 0.0,
+    frco2rt(4:6)    = 0.0, 0.0, 0.0,
+    frco2rt(7:9)   = 0.0, 0.0, 0.0,
+    frco2rt(10:12)   = 0.0, 0.0, 0.0,
+
+    !> fraction of root biomass becoming litter after combustion
+    frltrrt(1:3)     = 0.10, 0.10, 0.00,
+    frltrrt(4:6)    = 0.10, 0.10, 0.10,
+    frltrrt(7:9)   = 0.00, 0.00, 0.00,
+    frltrrt(10:12)   = 0.25, 0.25,  0.00,
+
+    !> fraction of litter burned during fire and emitted as gases
+    frltrbrn(1:3)     = 0.30, 0.30, 0.00,
+    frltrbrn(4:6)    = 0.36, 0.36, 0.36,
+    frltrbrn(7:9)   = 0.00, 0.00, 0.00,
+    frltrbrn(10:12)   = 0.42, 0.42, 0.00,
+
+    !> pft prevalence for stand replacing fire events (based on resistance to fire damage, ie. cambial kill)(unitless)
+    standreplace(1:3)     = 0.20, 0.20, 0.00,
+    standreplace(4:6)    = 0.50, 0.20, 0.15,
+    standreplace(7:9)   = 0.00, 0.00, 0.00,
+    standreplace(10:12)   = 0.25, 0.25, 0.00,
+
+    ! Emissions factors by chemical species
+    !    Values are from Andreae 2011 as described in Li et al. 2012 Biogeosci. Units: g species / (kg DOM)
+    !> pft-specific emission factors for CO2,g species / (kg DOM)
+    emif_co2(1:3)     = 1576.0, 1576.0,   0.00,
+    emif_co2(4:6)    = 1604.0, 1576.0, 1654.0,
+    emif_co2(7:9)   = 1576.0, 1654.0,   0.00,
+    emif_co2(10:12)   = 1576.0, 1654.0, 0.00,
+
+    !    values from Wiedinmyer et al. 2011
+    !real, dimension(kk) :: emif_co2 = [ 1514.0, 1514.0,   0.00, &
+    !             1643.0, 1630.0, 1716.0, &
+    !             1537.0, 1537.0,   0.00, &
+    !             1692.0, 1692.0,   0.00 ]
+
+    !> pft-specific emission factors for CO,g species / (kg DOM)
+    emif_co(1:3)     = 106.0, 106.0, 0.00,
+    emif_co(4:6)    = 103.0, 106.0, 64.0,
+    emif_co(7:9)   = 106.0,  64.0, 0.00,
+    emif_co(10:12)   = 106.0,  64.0,  0.00,
+
+    !    values from Wiedinmyer et al. 2011
+    !real, dimension(kk) :: emif_co = [ 118.0, 118.0, 0.00, &
+    !             92.0, 102.0, 68.0, &
+    !            111.0, 111.0, 0.00, &
+    !             59.0,  59.0, 0.00 ]
+
+    !> pft-specific emission factors for CH4,g species / (kg DOM)
+    emif_ch4(1:3)     = 4.8, 4.8, 0.0,
+    emif_ch4(4:6)    = 5.8, 4.8, 2.4,
+    emif_ch4(7:9)   = 4.8, 2.4, 0.0,
+    emif_ch4(10:12)   = 4.8, 2.4, 0.0,
+
+    !    values from Wiedinmyer et al. 2011
+    !real, dimension(kk) :: emif_ch4 = [ 6.0, 6.0, 0.0, &
+    !             5.1, 5.0, 2.6, &
+    !             6.0, 6.0, 0.0, &
+    !             1.5, 1.5, 0.0 ]
+
+    !> pft-specific emission factors for non-methane hydrocarbons,g species / (kg DOM)
+    emif_nmhc(1:3)     = 5.7, 5.7, 0.0,
+    emif_nmhc(4:6)    = 6.4, 5.7, 3.7,
+    emif_nmhc(7:9)   = 5.7, 3.7, 0.0,
+    emif_nmhc(10:12)   = 5.7, 3.7, 0.0,
+
+    !    values from Wiedinmyer et al. 2011
+    !real, dimension(kk) :: emif_nmhc = [ 5.7, 5.7, 0.0, &
+    !              1.7, 5.7, 3.4, &
+    !              7.0, 7.0, 0.0, &
+    !              3.4, 3.4, 0.0 ]
+
+    !> pft-specific emission factors for H2,g species / (kg DOM)
+    emif_h2(1:3)     = 1.80, 1.80, 0.00,
+    emif_h2(4:6)    = 2.54, 1.80, 0.98,
+    emif_h2(7:9)   = 1.80, 0.98, 0.00,
+    emif_h2(10:12)   = 1.80, 0.98, 0.00,
+
+    !> pft-specific emission factors for NOx,g species / (kg DOM)
+    emif_nox(1:3)     = 3.24, 3.24, 0.00,
+    emif_nox(4:6)    = 2.90, 3.24, 2.49,
+    emif_nox(7:9)   = 3.24, 2.49, 0.00,
+    emif_nox(10:12)   = 3.24, 2.49, 0.00,
+
+    !    values from Wiedinmyer et al. 2011 (species: "NOx (as NO)" from Table 1)
+    !real, dimension(kk) :: emif_nox = [ 1.80, 2.30, 0.00, &
+    !             2.60, 1.30, 3.90, &
+    !             3.50, 3.50, 0.00, &
+    !             2.80, 2.80, 0.00 ]
+
+    !> pft-specific emission factors for N2O,g species / (kg DOM)
+    emif_n2o(1:3)     = 0.26, 0.26, 0.00,
+    emif_n2o(4:6)    = 0.23, 0.26, 0.20,
+    emif_n2o(7:9)   = 0.26, 0.20, 0.00,
+    emif_n2o(10:12)   = 0.26, 0.20, 0.00,
+
+    !     emission factors for aerosols
+
+    !> pft-specific emission factors for particles <2.5 micrometers in diameter,g species / (kg DOM)
+    emif_pm25(1:3)     = 12.7, 12.7,  0.0,
+    emif_pm25(4:6)    = 10.5, 12.7,  5.2,
+    emif_pm25(7:9)   = 12.7,  5.2,  0.0,
+    emif_pm25(10:12)   = 12.7,  5.2, 0.0,
+
+    !    values from Wiedinmyer et al. 2011
+    !real, dimension(kk) :: emif_pm25 = [ 13.0, 13.0, 0.0, &
+    !               9.7, 13.0, 9.3, &
+    !               5.8,  5.8, 0.0, &
+    !               5.4,  5.4, 0.0 ]
+
+    !> pft-specific emission factors for total particulate matter,g species / (kg DOM)
+    emif_tpm(1:3)     = 17.6, 17.6,  0.0,
+    emif_tpm(4:6)    = 14.7, 17.6,  8.5,
+    emif_tpm(7:9)   = 17.6,  8.5,  0.0,
+    emif_tpm(10:12)   = 17.6,  8.5, 0.0,
+
+    !    values from Wiedinmyer et al. 2011
+    !real, dimension(kk) :: emif_tpm = [ 18.0, 18.0, 0.0, &
+    !             13.0, 18.0,15.4, &
+    !             13.0, 13.0, 0.0, &
+    !              8.3,  8.3, 0.0 ]
+
+    !> pft-specific emission factors for total carbon,g species / (kg DOM)
+    emif_tc(1:3)     = 8.3, 8.3, 0.0,
+    emif_tc(4:6)    = 7.2, 8.3, 3.4,
+    emif_tc(7:9)   = 8.3, 3.4, 0.0,
+    emif_tc(10:12)   = 8.3, 3.4, 0.0,
+
+    !    values from Wiedinmyer et al. 2011 (TPC in Table 1)
+    !real, dimension(kk) :: emif_tc = [ 8.3, 8.3, 0.0, &
+    !            5.2, 9.7, 7.1, &
+    !            4.0, 4.0, 0.0, &
+    !            3.0, 3.0, 0.0 ]
+
+    !> pft-specific emission factors for organic carbon,g species / (kg DOM)
+    emif_oc(1:3)     = 9.1, 9.1, 0.0,
+    emif_oc(4:6)    = 6.7, 9.1, 3.2,
+    emif_oc(7:9)   = 9.1, 3.2, 0.0,
+    emif_oc(10:12)   = 9.1, 3.2, 0.0,
+
+    !    values from Wiedinmyer et al. 2011
+    !real, dimension(kk) :: emif_oc = [ 7.8, 7.8, 0.0, &
+    !            4.7, 9.2, 6.6, &
+    !            3.3, 3.3, 0.0, &
+    !            2.6, 2.6, 0.0 ]
+
+    !> pft-specific emission factors for black carbon,g species / (kg DOM)
+    emif_bc(1:3)     = 0.56, 0.56, 0.00,
+    emif_bc(4:6)    = 0.56, 0.56, 0.47,
+    emif_bc(7:9)   = 0.56, 0.47, 0.00,
+    emif_bc(10:12)   = 0.56, 0.47, 0.00,
+
+    !    values from Wiedinmyer et al. 2011
+    !real, dimension(kk) :: emif_bc = [ 0.20, 0.20, 0.00, &
+    !            0.52, 0.56, 0.50, &
+    !            0.69, 0.69, 0.00, &
+    !            0.37, 0.37, 0.00 ]
+
+! hetres parameters: ----------
+
+    !> litter respiration rates at 15 c in in kg c/kg c.year
+    bsratelt(1:3)     = 0.4453, 0.5986, 0.0000,
+    bsratelt(4:6)    = 0.6339, 0.7576, 0.6957,
+    bsratelt(7:9)   = 0.6000, 0.6000, 0.0000,
+    bsratelt(10:12)   = 0.5260, 0.5260, 0.0000,
+
+    !> soil carbon respiration rates at 15 c in kg c/kg c.year
+    bsratesc(1:3)     = 0.0260, 0.0260, 0.0000,
+    bsratesc(4:6)    = 0.0208, 0.0208, 0.0208,
+    bsratesc(7:9)   = 0.0350, 0.0350, 0.0000,
+    bsratesc(10:12)   = 0.0125, 0.0125, 0.0000,
+
+    !> Constants used in tanh formulation of respiration Q10 determination
+    tanhq10= 1.44, 0.56, 0.075, 46.0,
+    !tanhq10= 2, 0, 0.075, 46.0,
+            !   a     b      c     d
+            ! q10 = a + b * tanh[ c (d-temperature) ]
+            ! when a = 2, b = 0, we get the constant q10 of 2. if b is non
+            ! zero then q10 becomes temperature dependent
+            !DM - second equation used for forest sites
+
+    !< parameter for finding litter temperature as a weighted average of top soil layer temperature and root temperature
+    alpha_hetres = 0.7,
+
+    !< bare ground litter respiration rate at 15 c in kg c/kg c.year
+    bsratelt_g = 0.5605,
+
+    !< bare ground soil c respiration rates at 15 c in kg c/kg c.year
+    bsratesc_g = 0.02258,
+
+    !< parameter describing exponential soil carbon profile. used for estimating temperature of the carbon pool
+    a_hetr = 4.0,
+    
+    !< Following Lawrence et al. Environ. Res. Lett.,2015. we adopt 10.0 as our value, controls
+    !!  decomposition at depth to account for observed reductions that are independent of temp and moisture.
+    r_depthredu = 10.0,
+
+    !< Temperature below which respiration is inhibited. [ C ]
+    tcrit = -1.0,
+    
+    !< Factor to reduce respiration by for temps below tcrit
+    frozered = 0.1,   
+
+! landuse_change_mod.f90 parameters: --------------
+! NOTE: combust, paper, furniture ABSOLUTELY MUST add to 1.0!
+
+    !< how much deforested/chopped off biomass is combusted (these absolutely must add to 1.0!)
+    combust   = 0.15, 0.30, 0.45,
+
+    !< how much deforested/chopped off biomass goes into short term storage such as paper
+    paper     = 0.70, 0.70, 0.55,
+
+    !< how much deforested/chopped off biomass goes into long term storage such as furniture
+    furniture = 0.15, 0.00, 0.00,
+
+    !< biomass thresholds for determining if deforested area is a forest, a shrubland, or a bush kg c/m2
+    bmasthrs  = 4.0, 1.0,
+
+! mainres.f parameters: ----------
+
+    !    Base respiration rates for stem and root for ctem pfts in kg c/kg c.year at 15 degrees celcius. note that maintenance
+    !    respiration rates of root are higher because they contain both wood (coarse roots) and fine roots.
+    !    New parameter values introduced to produce carbon use efficiencies more in
+    !    line with literature (zhang et al. 2009, luyssaert et al. gcb 2007)
+    !    values changed for bsrtstem and bsrtroot. jm 06.2012
+
+    !< Base respiration rates for stem in kg c/kg c.year at 15 degrees celcius (prescribed run values)
+    bsrtstem(1:3)     = 0.0900, 0.0550, 0.0000,
+    bsrtstem(4:6)    = 0.0600, 0.0335, 0.0300,
+    bsrtstem(7:9)   = 0.0365, 0.0365, 0.0000,
+    bsrtstem(10:12)   = 0.0000, 0.0000, 0.0000, ! no stem component for grasses
+
+    !< Base respiration rates for stem in kg c/kg c.year at 15 degrees celcius (competition run values)
+    bsrtstem_compete(1:3)     = 0.0700, 0.0550, 0.0000,
+    bsrtstem_compete(4:6)    = 0.0500, 0.0335, 0.0350,
+    bsrtstem_compete(7:9)   = 0.0365, 0.0365, 0.0000,
+    bsrtstem_compete(10:12)   = 0.0000, 0.0000, 0.0000, ! no stem component for grasses
+
+    !< Base respiration rates for root in kg c/kg c.year at 15 degrees celcius (prescribed run values)
+    bsrtroot(1:3)     = 0.5000, 0.2850, 0.0000,
+    bsrtroot(4:6)    = 0.6500, 0.2250, 0.0550,
+    bsrtroot(7:9)   = 0.1600, 0.1600, 0.0000,
+    bsrtroot(10:12)   = 0.1000, 0.1000, 0.0000,
+
+    !< Base respiration rates for root in kg c/kg c.year at 15 degrees celcius (competition run values)
+    bsrtroot_compete(1:3)     = 0.5000, 0.2850, 0.0000,
+    bsrtroot_compete(4:6)    = 0.4000, 0.2250, 0.1500,
+    bsrtroot_compete(7:9)   = 0.1600, 0.1600, 0.0000,
+    bsrtroot_compete(10:12)   = 0.1000, 0.1000, 0.0000,
+
+    !< Minimum live wood fraction
+    minlvfr = 0.05,
+
+! peatlands_mod.f90 parameters:
+
+    ! mosspht subroutine parameters
+
+        !< Base dark respiration rate of moss umol CO2/m2/s
+        rmlmoss25 = 1.1, ! (best estimate is from fig. 6b in Williams and Flanagan (1998) seasonal variation not considered
+
+        !< tau coefficient (rate at 25 Celcius)
+        tau25m=2321.0,   ! computed on the basis of the specificity factor (102.33) times Kco2/Kh2o (28.38) to convert for value in solution to that
+                        !! based in air. The old value was 2321.1. New value (2904.12) Quercus robor (Balaguer
+                        !! et al., 1996). Similar number from Dreyeret al. 2001, Tree Physiol, tau= 2710
+                        !! 2600 from Brooks and Farquhar (1985) used AS A CONSTANT; 2321 Harley et al. (1992)
+
+        ektau =-29000.0, !< $J mol^{-1}$ (Jordan and Ogren, 1984)
+
+        !< kinetic coef for CO2 at 25 C (Pa)
+        kc25= 30.2,      !! Based upon: 30.2 Arbutus unedo  (Harley et al., 1986), 40.4 (von Caemmerer et al., 1994),
+                        !! 27.46 deciduous forest understory (Wilson et al. 2000); 30.0 (Collatz et al., 1991),
+                        !! 30.0 Populus tremula,Coylus avelana,Tilia cordata (Kull and Niinemets, 1998)
+
+        !< kinetic coef for O2 at 25C (rate)  (Pa)
+        ko25=24800.0,    !! Based upon: 24800 Arbutus unedo (Harley et al.,1986), 41980 deciduous forest understory (Wilson et al. 2000),
+                        !! 30000 (Collatz et al., 1991), 30000 (Kull and Niinemets, 1998) see kc25
+
+        !< Activation energy for Kc of CO2 ($J mol^{-1}$) at 25C
+        ec=63500.0,      !! Based upon: 59430 Arbutus unedo (Harley et al., 1986), 80500 deciduous forest understory (Wilson et al., 2000)
+                        !! 63500 mosses and shrubs Tenhunen et al. (1994)
+
+        !< Activation energy for electron transport, ($J mol^{-1}$)
+        ej=37000.0,      !! Based upon: 37000 at 25C J mol-1(Farquhar et al.(1980), 55000 J mol-1 at 311K  (Harley & Baldocchi,1995,PCE) lichis tree
+
+        !< Activation energy for Ko ($J mol^{-1}$) at 25C
+        eo=35000.0,      !! Based upon: 36000 Arbutus unedo (Harley et al.,1986), 14500 for deciduous forest understory (Wilson et al., 2000)
+                        !! 35000 mosses and shrubs (Tenhunen et al.,1994)
+
+        !< Activation energy for carboxylation ($J mol^{-1}$) at 25C
+        evc=53000.0,     !! Based upon: 53000 (Kirschbaum & Farquhar, 1984), 55000 (at 311K) (Harley & Baldocchi, 1995,PCE)
+
+        !< Constant affecting J at low temperature ($J mol^{-1}$) at 25C
+        sj=719.0,        ! Based upon: 714.0 in Lloyd et al. (1995) Macadamia integrifolia and Litchi chinesis
+
+        !< Constant affecting J at high temperature ($J mol^{-1}$) at 25C
+        hj=220300.0,      !! Based upon: 220300 Macadamia integrifolia and Litchi chinesis Lloyd et al. (1995) 206083 Pinus radiata (Wilson et al. 2000)
+
+        !< Efficiency of conversion of incident photons into electrons(mol electron/mol photon)
+        alpha_moss=0.21,    !! not sensitive, alpha = 0.21 Flanagan's value for sphagnum and pleurozium alpha = 0.3 (Seel et al.,1992) for
+                            !! T. ruraliformis and d. palustris
+
+    ! decp subroutine parameters:
+
+        !< minimum temperature of soil respiration,K (peatland soils)
+        dctmin= 269.0,
+
+        !< base temperature for Q10, K (peatland soils)
+        dcbaset=283.0,
+
+        !< heterotrophic respiration base rate for peatlands (yr-1)
+        bsrateltms = 0.20,    !! Based upon 0.05 (T.Moore unpubished data) for shrubs 0.2 from Moore and around 0,5 for ctem. TM's values is natural
+                            !! condition, CTEM is opt at 15degrees, So TM's values can be scaled up more rates in Aerts 1997, Moore 2007
+
+    ! peatland parameters used in other subroutines:
+
+        !< natual logarithm of roughness length of moss surface.
+        zolnmoss = -6.57,           !! Based upon: roughness length as 0.0014 for momentum (Oke 1997, Raddatz et al, 2009)
+
+        !< pore volume of moss ($m^3/m^3$)
+        thpmoss = 0.98,             !! Based upon: 0.89 Price and Whittington 2010, 98.2 (Sphagnum) and 98.9 (feather) in
+                                    !! O'Donnell et al. 2009; 0.90 in Berlinger et al.2001
+
+        !< Liquid water retention capacity of moss ($m^3/m^3$)
+        thrmoss = 0.20,             !! Based upon: Price and Whittington 2010 for upper 5cm moss 0.275/0.6 comparing to 0.39/0.62 in
+                                    !! fibric for the feather moss.For spahgnum moss(O'Donnell et al.2009)
+
+        !< residual liquid water content after freezing or evaporation of moss ($m^3/m^3$)
+        thmmoss = 0.01,             !! Based upon: Price and Whittington 2010
+
+        !< Clapp and Hornberger empirical "b" parameter of moss
+        bmoss = 2.3,                !! Based upon: Berlinger et al.2001(they set 4.0 for peat)
+
+        !< Soil moisure suction at saturation of moss (m)
+        psismoss =0.0103,           !! Based upon: moss and peat using same values in Berlinger et al. 2001
+
+        !< Saturated hydrualic conductivity of moss (m)
+        grksmoss = 1.83E-3,         !! The saturated hydrualic conductivity is much higher in living moss than lower
+                                    !! layer (Price et al. 2008). 1.83E-3 for 5cm moss, their value of 10cm moss is
+                                    !! 2.45E-4, similar to fibric here
+
+        !< Volumetric heat capacity of moss ($J m^{-3} K^{-1}$)
+        hcpmoss = 2.50E6,           ! same as hcp of peat in Beringer et al. 2001  2016
+
+        !< Moss growth respiration coefficient
+        grescoefmoss = 0.15,
+
+        !< Moss mortality rate constant (year-1)
+        rmortmoss = 0.7,            !assumed based on literature (eg. 54g litter/75g biomass in Moore et al,2002)
+
+        !< Humification ratio of moss litter
+        humicfacmoss=2.0,           !higher in mosses than vascular pfts because the decomposibility of moss litter is
+                                    !!  lower.It's calibrated over the training sites.
+
+! phenology.f parameters: ----------
+
+    !> Number of days over which to check if net photosynthetic rate is positive before initiating leaf onset
+    dayschk(1:3)     = 7, 7, 0,
+    dayschk(4:6)    = 7, 7, 7,
+    dayschk(7:9)   = 7, 7, 0,
+    dayschk(10:12)   = 7, 7, 0,
+
+    !> Parameter determining how fast soil dryness causes leaves to fall
+    drgta(1:3)     = 3.0, 3.0, 0.0,
+    drgta(4:6)    = 3.0, 3.0, 3.0,
+    drgta(7:9)   = 3.0, 3.0, 0.0,
+    drgta(10:12)   = 3.0, 3.0, 0.0,
+
+    !> eta and kappa, parameters for estimating min. stem+root biomass
+    eta(1:3)     = 10.0, 30.8, 0.00,
+    eta(4:6)    = 31.0, 50.0, 30.0,
+    eta(7:9)   = 7.0,  7.0,   0.0,
+    eta(10:12)   = 3.0,  3.0,   0.00,
+
+    !> required to support green leaf biomass. kappa is 1.6 for trees and crops, and 1.2 for grasses.
+    kappa(1:3)     = 1.6, 1.6, 0.0,
+    kappa(4:6)    = 1.6, 1.6, 1.6,
+    kappa(7:9)   = 1.6, 1.6, 0.0,
+    kappa(10:12)   = 1.2, 1.2, 0.0,
+
+    !< Harvest span (time in days over which crops are harvested,  15 days),
+    !< and  fall span (time in days over which bdl cold dcd plants shed their leaves,  30 days)
+    !flhrspan = 17.0, 45.0,   this was what was here when I found it, Daniel
+    flhrspan = 15.0, 30.0,
+
+    !< Parameter used to estimate lai of brown leaves. We assume that SLA of brown leaves is this fraction of SLA of green leaves
+    fracbofg = 0.55,
+
+    !> LAI threshold for harvesting crops. values are zero for all pftsother than c3 and c4 crops.
+    harvthrs(1:3)     = 0.0, 0.0, 0.0,
+    harvthrs(4:6)    = 0.0, 0.0, 0.0,
+    harvthrs(7:9)   = 4.5, 3.5, 0.0,
+    harvthrs(10:12)   = 0.0, 0.0, 0.0,
+
+    !> CTEM can use user-specified specific leaf areas (SLA) if the following specified values are greater than zero
+    specsla(1:3)     = 0.0, 0.0, 0.0,  ! Not used, will be used if these are non-zero.
+    specsla(4:6)    = 0.0, 0.0, 0.0,
+    specsla(7:9)   = 0.0, 0.0, 0.0,
+    specsla(10:12)   = 0.0, 0.0, 0.0,
+
+    !> Percentage of max. LAI that can be supported which is used as a threshold for determining leaf phenology status
+    thrprcnt(1:3)     = 40.0, 40.0,  0.0,
+    thrprcnt(4:6)    = 40.0, 50.0, 50.0,
+    thrprcnt(7:9)   = 50.0, 50.0,  0.0,
+    thrprcnt(10:12)   = 40.0, 40.0, 0.0,
+
+    !> Lower temperature threshold for ctem's 9 pfts. these are used to estimate cold stress related leaf loss rate (degree c)
+    lwrthrsh(1:3)     = -50.0, -5.0, 0.0,
+    lwrthrsh(4:6)    = 5.0,  8.0, 5.0,
+    lwrthrsh(7:9)   = 5.0,  5.0, 0.0,
+    lwrthrsh(10:12)   = 0.1,  5.0, 0.0,
+
+    !> Max. loss rate for cold stress for all 9 pfts, (1/day)
+    cdlsrtmx(1:3)     = 0.10, 0.30, 0.00,
+    cdlsrtmx(4:6)    = 0.30, 0.40, 0.15,
+    cdlsrtmx(7:9)   = 0.15, 0.15, 0.00,
+    cdlsrtmx(10:12)   = 0.15, 0.15, 0.00,
+
+! mortality.f parameters: ---------
+
+    !< kmort1, parameter used in growth efficiency mortality formulation
+    kmort1 = 0.3
+
+    !< Maximum mortality when growth efficiency is zero (1/year) (prescribed run values)
+    mxmortge(1:3)     = 0.005, 0.005,  0.00,     ! Same as competition except for grasses.
+    mxmortge(4:6)    = 0.005, 0.005, 0.005,
+    mxmortge(7:9)   = 0.00,  0.00,  0.00,
+    mxmortge(10:12)   = 0.00,  0.00,  0.00,
+
+    !< Maximum mortality when growth efficiency is zero (1/year) (competition run values)
+    mxmortge_compete(1:3)     = 0.005, 0.005,  0.00,
+    mxmortge_compete(4:6)    = 0.005, 0.005, 0.005,
+    mxmortge_compete(7:9)   = 0.00,  0.00,  0.00,
+    mxmortge_compete(10:12)   = 0.050,  0.100, 0.00,
+
+    !< Maximum plant age. used to calculate intrinsic mortality rate. Maximum age for crops is set to zero since they will be harvested
+    !< anyway. grasses are treated the same way since the turnover time for grass leaves is 1 year and for roots is 2 years.
+    maxage(1:3)     = 250.0, 400.0,   0.0,    !(prescribed run values)
+    maxage(4:6)    = 600.0, 250.0, 500.0,
+    maxage(7:9)   = 0.0,   0.0,   0.0,
+    maxage(10:12)   = 0.0,   0.0,   0.0,
+
+    maxage_compete(1:3)     = 800.0, 500.0,   0.0,    !(competition run values)
+    maxage_compete(4:6)    = 700.0, 450.0, 500.0,
+    maxage_compete(7:9)   = 0.0,   0.0,   0.0,
+    maxage_compete(10:12)   = 0.0,   0.0,   0.0,
+
+! phenology.f parameters: ---------
+
+    !> Leaf life span (in years) for CTEM's 9 pfts
+    lfespany(1:3)     = 5.00, 1.00, 0.00,
+    lfespany(4:6)    = 1.50, 1.00, 1.00,  !PFT 3 was 1.75 (from IBIS), 2.00 follows LPJ. JM Mar 2014.
+    lfespany(7:9)   = 1.75, 1.75, 0.00,
+    lfespany(10:12)   = 1.00, 1.00, 0.00,
+
+    !< Max. loss rate for drought stress for all 9 pfts, (1/day) (prescribed run values)
+    drlsrtmx(1:3)     = 0.0025, 0.005, 0.000,
+    drlsrtmx(4:6)    = 0.005, 0.005, 0.025,
+    drlsrtmx(7:9)   = 0.005, 0.005, 0.000,
+    drlsrtmx(10:12)   = 0.050, 0.050, 0.000,
+
+    !< Max. loss rate for drought stress for all 9 pfts, (1/day) (competition run values)
+    drlsrtmx_compete(1:3)     = 0.006, 0.005, 0.000,
+    drlsrtmx_compete(4:6)    = 0.010, 0.025, 0.030,
+    drlsrtmx_compete(7:9)   = 0.005, 0.005, 0.000,
+    drlsrtmx_compete(10:12)   = 0.020, 0.020, 0.000,
+
+    !> Parameter determining how fast cold temperatures causes leaves to fall
+    colda(1:3)     = 3.0, 3.0, 0.0,
+    colda(4:6)    = 3.0, 3.0, 3.0,
+    colda(7:9)   = 3.0, 3.0, 0.0,
+    colda(10:12)   = 3.0, 3.0, 0.0,
+
+    !> No. of days for which some temperature has to remain below a given threshold for initiating a process, days
+    coldlmt = 7 , 5,
+
+    !>1. -5 c threshold for initiating "leaf fall" mode for ndl dcd trees \n
+    !>2.  8 c threshold for initiating "harvest" mode for crops the array colddays(i,2) tracks days corresponding to these thresholds
+    coldthrs = -5.0 , 2.0,
+    !Modified the above for crops, from 8.0 to 2.0 - DM
+
+    !< Root temperature threshold for initiating leaf onset for cold broadleaf deciduous pft, degrees celcius
+    roothrsh = 8.0,
+
+! turbation (in soilC_processes.f90) parameters: ---------------------------------
+
+    !< Diffusivity (or simply the rate of the cryoturbation) \f$(m^2/d)\f$
+    !! value from \cite Koven2011-796 - 5 cm2/yr. 
+    cryodiffus = 1.36986E-6,           
+
+    !< Diffusivity (or simply the rate of the bioturbation) \f$(m^2/d)\f$
+    !! value from \cite Koven2011-796 - 1 cm2/yr. 
+    biodiffus = 2.73972E-7,
+                                                            
+    !< Constant used in determination of depth at which cryoturbation ceases                                                            
+    kterm = 3.0,       
+    
+    !< e-folding time scale for updating mean active layer depth used in determining the depth 
+    !! roots can penetrate. (years)
+    eftime = 10.0,        
+                                  
+! soil_ch4uptake parameters: -----------------------------
+
+    !< Diffusivity of CH4 in air (cm^2 s^-1) @ STP
+    D_air = 0.196        
+    
+    !< Scaling factor takes CH4_soills to mg CH4 m^-2 s^-1 (units: \f$mg CH_4 ppmv^{-1} s^{-1} m^{-2} cm{-1}\f$)
+    g_0 = 6.79051E-3   ! 586.7 / 86400.
+    
+    !< Constant derived in Curry (2007) from comparison against measurements (-)
+    betaCH4 = 0.8      
+      
+    !< Base oxidation rate derived in Curry (2007) from comparison against measurements \f$(s^{-1})\f$
+    k_o = 5.03E-5        
+
+! turnover.f parameters: ---------------------------------
+
+    !> Stemlife, turnover time scale for stem for different pfts
+    stemlife(1:3)     = 86.3, 86.3, 0.00,
+    stemlife(4:6)    = 80.5, 80.5, 75.8,
+    stemlife(7:9)   = 20.0, 20.0, 0.00,
+    stemlife(10:12)   = 0.00, 0.00, 0.00,
+
+    !> Rootlife, turnover time scale for root for different pfts
+    rootlife(1:3)     = 13.8,13.2, 0.0,
+    rootlife(4:6)    = 12.7,10.9, 9.8,
+    rootlife(7:9)   = 3.0, 3.0, 0.0,
+    rootlife(10:12)   = 3.0, 3.0, 0.0,
+
+    !< Stem harvest span. same as crop harvest span. period in days over which crops are harvested.
+    stmhrspn = 17.0,
+
+! wetland_methane.f90 parameters: ------------
+
+    !>methane to carbon dioxide flux scaling factor.\n
+    !>Rita Wania's thesis suggests about 0.25, but we get a better agreement to outputs from the Walter's model if we use 0.16.
+    !>Note that this scaling factor likely is temperature dependent, and increases with temperature, but it is difficult to
+    !>know the function, so leave constant for now ratio is \f$mol ch_4\f$ to \f$mol co_2\f$
+    ratioch4     = 0.125, ! New value based on Vivek's work of Aug 2016.
+
+    !>ratio of wetland to upland respiration\n
+    !>Use the heterotrophic respiration outputs for soil and litter as the ecosystem basis.  These were summed as "hetrores".
+    !>This respiration is for upland soils; we multiply by wtdryres as the ratio of wetland to upland respiration
+    !>based on literature measurements: Dalva et al. 1997 found 0.5 factor; Segers 1998 found a 0.4 factor. use 0.45 here (unitless)
+    wtdryres     = 0.23, 0.37, 0.23,
+
+    !< Northern zone for wetland determination (degrees North)
+    lat_thrshld1 = 40.0,
+
+    !< Boundary with southern zone for wetland determination (degrees North)
+    lat_thrshld2 = -35.0,
+
+    !< Soil wetness thresholds in the North zone
+    soilw_thrshN = 0.45, 0.65,
+
+    !< Soil wetness thresholds in the Equatorial zone
+    soilw_thrshE = 0.55, 0.85,
+
+    !< Soil wetness thresholds in the South zone
+    soilw_thrshS = 0.70, 0.85,
+
+ ! Photosynthesis parameters: --------------------------------------------------
+
+    ! lower temperature limits for photosynthesis, kelvin
+     tlow(1:3)     = 268.1, 268.1, 0.000,
+     tlow(4:6)     = 273.1, 273.1, 273.1,
+     tlow(7:9)     = 270.1, 278.1, 0.000,
+     tlow(10:12)   = 272.1, 283.1, 0.000,
+
+    ! upper temperature limits for photosynthesis, kelvin
+     tup(1:3)     = 307.1, 307.1, 0.000,
+     tup(4:6)     = 318.1, 310.1, 310.1,
+     tup(7:9)     = 315.1, 315.1, 0.000,
+     tup(10:12)   = 313.1, 323.1, 0.000,
+
+    ! quantum efficiencies, values of 0.08 & 0.04 are used for c3 and c4 plants, respectively
+     alpha_phtsyn(1:3)   = 0.12, 0.08, 0.00,
+     alpha_phtsyn(4:6)   = 0.08, 0.08, 0.08,
+     alpha_phtsyn(7:9)   = 0.08, 0.04, 0.00,
+     alpha_phtsyn(10:12) = 0.08, 0.04, 0.00,
+
+    ! leaf scattering coefficients, values of 0.15 & 0.17 are used for c3 and c4 plants, respectively
+     omega_phtsyn(1:3)   = 0.15, 0.15, 0.00,
+     omega_phtsyn(4:6)   = 0.15, 0.15, 0.15,
+     omega_phtsyn(7:9)   = 0.15, 0.17, 0.00,
+     omega_phtsyn(10:12) = 0.15, 0.17, 0.00,
+
+    ! parameter m used in photosynthesis-stomatal conductance coupling.
+     mm(1:3)   = 9.0, 9.0, 0.0,
+     mm(4:6)   = 12.0,12.0,12.0,
+     mm(7:9)   = 12.0, 6.0, 0.0,
+     mm(10:12) = 12.0, 6.0, 0.0,
+
+    ! parameter b used in photosynthesis-stomatal conductance coupling.
+     bb(1:3)   = 0.01, 0.01, 0.00,
+     bb(4:6)   = 0.01, 0.01, 0.01,
+     bb(7:9)   = 0.01, 0.04, 0.00,
+     bb(10:12) = 0.01, 0.04, 0.00,
+
+    ! parameter vpd0 used in leuning type photosynthesis - stomatal conductance coupling, in pascals
+     vpd0(1:3)   = 2000., 2000., 0.000,
+     vpd0(4:6)   = 2000., 2000., 2000.,
+     vpd0(7:9)   = 1500., 1500., 0.000,
+     vpd0(10:12) = 1500., 1500., 0.000,
+
+    ! exponent for soil moisture stress. for sn equal to 1, photosynthesis decreases linearly with soil moisture, and of course non-linearly
+    ! for values higher than 1. when sn is about 10, photosynthesis does not start decreasing until soil moisture is about half way between
+    ! wilting point and field capacity.
+      sn(1:3)   = 2, 2, 0,
+      sn(4:6)   = 4, 2, 2,
+      sn(7:9)   = 2, 2, 0,
+      sn(10:12) = 2, 2, 0,
+
+    ! additional constrain of soil moisture stress on photosynthesis.
+    ! this can be used to simulate the effect of irrigation for crops.
+      smscale(1:3)   = 0.0, 0.0, 0.0,
+      smscale(4:6)   = 0.0, 0.0, 0.0,
+      smscale(7:9)   = 0.1, 0.1, 0.0,
+      smscale(10:12) = 0.0, 0.0, 0.0,
+
+    ! max. photosynthetic rate, mol co2 m^-2 s^-1 values are mainly derived
+    ! from \cite alton2017-pd which doesn't include c4.  
+      !vmax(1:3)   = 42.0e-06, 47.0e-06, 0.00e-06,
+      !vmax(4:6)   = 35.0e-06, 57.0e-06, 40.0e-06,
+
+      vmax(1:3)   = 50.0e-06, 50.0e-06, 0.00e-06,
+      vmax(4:6)   = 50.0e-06, 57.0e-06, 50.0e-06,
+
+      vmax(7:9)   = 55.0e-06, 40.0e-06, 0.00e-06,
+      vmax(10:12) = 55.0e-06, 15.0e-06, 0.00e-06,
+
+    ! no. of iterations for calculating intercellular co2 concentration
+      reqiter = 10,
+
+    ! max. intercellular co2 concentration, pascals
+      co2imax = 2000.00,
+
+    ! photosynthesis coupling or curvature coefficients
+      beta1 = 0.950,
+      beta2 = 0.990,
+
+    ! parameter to initialize intercellular co2 conc.
+      inico2i(1:3)   = 0.65, 0.65, 0.00,
+      inico2i(4:6)   = 0.65, 0.65, 0.65,
+      inico2i(7:9)   = 0.65, 0.37, 0.00,
+      inico2i(10:12) = 0.65, 0.37, 0.00,
+
+    ! leaf maintenance respiration coefficients
+      rmlcoeff(1:3)   = 0.015, 0.021, 0.000,
+      rmlcoeff(4:6)   = 0.025, 0.015, 0.015,
+      rmlcoeff(7:9)   = 0.015, 0.025, 0.000,
+      rmlcoeff(10:12) = 0.013, 0.025, 0.000,
+
+    ! additional parameters for two-leaf model leaf angle distribution
+      chi(1:3)   = 0.01,  0.01, 0.00,
+      chi(4:6)   = 0.17,  0.17, 0.17,
+      chi(7:9)   = -0.30, -0.30, 0.00,
+      chi(10:12) = -0.30, -0.30, 0.00,
+
+    ! photosynthesis down regulation parameters equivalent co2 fertilization effect that we want model to yield
+      gamma_w = 0.35,
+
+    ! equivalent co2 fertilization effect that model actually gives without any photosynthesis down-regulation
+      gamma_m = 0.95,
+/

@@ -1,0 +1,129 @@
+ CTEM INITIALIZATION FILE. This represents the initial conditions seen in the Big Creek Watershed with 12 MOSAIC/GRU tiles over many spatial grids
+     NDL     NDL     BDL     BDL     BDL    CROP    CROP   GRASS   GRASS
+     EVG     DCD     EVG DCD-CLD DCD-DRY      C3      C4      C3      C4!Note 2 types of BDL DCD Cold n Dry  
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Min. LAI, for use with CTEM1 option only TILE=1 No Data
+    1.00    1.00    1.00    1.00    1.00    0.10    0.10    0.10    0.00		!Max. LAI, for use with CTEM1 option only
+    1.00    0.00    0.00    1.00    0.00    1.00    0.00    1.00    0.00		!Divide CLASS' 4 PFTs -> 9
+    0.10    0.10    0.10    0.10    0.00    0.10    0.10    0.10    0.00		!Green Leaf Mass for 9 PFTs, Kg C/m2
+    0.10    0.10    0.10    0.10    0.00    0.10    0.10    0.10    0.00		!Brown Leaf Mass for 9 PFTs, Kg C/m2
+    1.00    0.00    0.00    1.00    0.00    0.10    0.00    0.05    0.00		!Stem Mass for 9 PFTs, Kg C/m2
+    0.30    0.00    0.00    0.30    0.00    0.00    0.00    0.10    0.00		!Root Mass for 9 PFTs, Kg C/m2
+    0.10    0.00    0.00    0.20    0.00    0.00    0.00    0.00    0.00  0.00  !Litter Mass for 9 PFTs+Bare, Kg C/m2
+    0.10    0.00    0.00    0.10    0.00    0.10    0.00    0.20    0.00  0.00  !Soil C Mass for 9 PFTs+Bare, Kg C/m2
+       2       2       2       3       2       3       3       2       2		!Leaf Status (1,2,3 or 4). See Phenology.
+       0       0       0       0       0       0       0       0       0		!Days with +ve net photosynthesis. See Phenology.
+    7.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Min. LAI, for use with CTEM1 option only TILE=2 Temperate Needleleaf
+    8.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Max. LAI, for use with CTEM1 option only
+    1.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Divide CLASS' 4 PFTs -> 9
+    0.15    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Green Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Brown Leaf Mass for 9 PFTs, Kg C/m2
+    7.30    0.00    0.00    0.00    0.00    0.00    0.00    0.05    0.00		!Stem Mass for 9 PFTs, Kg C/m2
+    1.90    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Root Mass for 9 PFTs, Kg C/m2
+    1.20    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00  0.00  !Litter Mass for 9 PFTs+Bare, Kg C/m2
+    3.70    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00  0.00  !Soil C Mass for 9 PFTs+Bare, Kg C/m2
+       1       2       2       3       2       3       3       2       2		!Leaf Status (1,2,3 or 4). See Phenology.
+       0       0       0       0       0       0       0       0       0		!Days with +ve net photosynthesis. See Phenology.
+    0.00    0.00    0.00    0.50    0.00    0.00    0.00    0.00    0.00		!Min. LAI, for use with CTEM1 option only TILE=3 Broadleaf Deciduous
+    0.00    0.00    0.00    8.00    0.00    0.00    0.10    0.00    0.00		!Max. LAI, for use with CTEM1 option only
+    0.00    0.00    0.00    1.00    0.00    0.00    0.00    0.00    0.00		!Divide CLASS' 4 PFTs -> 9
+    0.00    0.00    0.00    0.20    0.00    0.00    0.10    0.00    0.00		!Green Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.10    0.00    0.00		!Brown Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    7.00    0.00    0.00    0.00    0.00    0.00		!Stem Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    1.50    0.00    0.00    0.00    0.00    0.00		!Root Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.50    0.00    0.00    0.00    0.00    0.00  0.00  !Litter Mass for 9 PFTs+Bare, Kg C/m2
+    0.00    0.00    0.00    3.00    0.00    0.00    0.00    0.00    0.00  0.00  !Soil C Mass for 9 PFTs+Bare, Kg C/m2
+       2       2       2       3       2       3       3       2       2		!Leaf Status (1,2,3 or 4). See Phenology.
+       0       0       0       0       0       0       0       0       0		!Days with +ve net photosynthesis. See Phenology.
+    7.00    0.00    0.00    0.50    0.00    0.00    0.00    0.00    0.00		!Min. LAI, for use with CTEM1 option only TILE=4 Mixed Forest
+    8.00    0.00    0.00    8.00    0.00    0.00    0.00    0.00    0.00		!Max. LAI, for use with CTEM1 option only
+    1.00    0.00    0.00    1.00    0.00    0.00    0.00    0.00    0.00		!Divide CLASS' 4 PFTs -> 9
+    0.15    0.00    0.00    0.20    0.00    0.00    0.00    0.00    0.00		!Green Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Brown Leaf Mass for 9 PFTs, Kg C/m2
+    7.30    0.00    0.00    7.00    0.00    0.00    0.00    0.00    0.00		!Stem Mass for 9 PFTs, Kg C/m2
+    1.90    0.00    0.00    1.50    0.00    0.00    0.00    0.00    0.00		!Root Mass for 9 PFTs, Kg C/m2
+    1.20    0.00    0.00    0.50    0.00    0.00    0.00    0.00    0.00  0.00  !Litter Mass for 9 PFTs+Bare, Kg C/m2
+    3.70    0.00    0.00    3.00    0.00    0.00    0.00    0.00    0.00  0.00  !Soil C Mass for 9 PFTs+Bare, Kg C/m2
+       1       2       2       3       2       3       3       2       2		!Leaf Status (1,2,3 or 4). See Phenology.
+       0       0       0       0       0       0       0       0       0		!Days with +ve net photosynthesis. See Phenology.
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Min. LAI, for use with CTEM1 option only TILE=5 Temperate Shrubland
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Max. LAI, for use with CTEM1 option only
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    1.00    0.00		!Divide CLASS' 4 PFTs -> 9
+    0.00    0.10    0.10    0.00    0.00    0.00    0.10    0.15    0.00		!Green Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.10    0.10    0.00    0.00    0.00    0.10    0.00    0.00		!Brown Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Stem Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    1.00    0.00		!Root Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    1.10    0.00  0.00  !Litter Mass for 9 PFTs+Bare, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    3.50    0.00  0.00  !Soil C Mass for 9 PFTs+Bare, Kg C/m2
+       2       2       2       3       2       3       3       2       2		!Leaf Status (1,2,3 or 4). See Phenology.
+       0       0       0       0       0       0       0       0       0		!Days with +ve net photosynthesis. See Phenology.
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    1.00    0.00		!Min. LAI, for use with CTEM1 option only TILE=6 Temperate Grassland
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    1.50    0.00		!Max. LAI, for use with CTEM1 option only
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    1.00    0.00		!Divide CLASS' 4 PFTs -> 9
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.10    0.00		!Green Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Brown Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.10    0.00		!Stem Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.20    0.00		!Root Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.10    0.00  0.00  !Litter Mass for 9 PFTs+Bare, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    1.00    0.00  0.00  !Soil C Mass for 9 PFTs+Bare, Kg C/m2
+       2       2       2       3       2       3       3       2       2		!Leaf Status (1,2,3 or 4). See Phenology.
+       0       0       0       0       0       0       0       0       0		!Days with +ve net photosynthesis. See Phenology.
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    1.00    0.00		!Min. LAI, for use with CTEM1 option only TILE=7 Wetland 
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    1.50    0.00		!Max. LAI, for use with CTEM1 option only
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    1.00    0.00		!Divide CLASS' 4 PFTs -> 9
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.10    0.00		!Green Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Brown Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.10    0.00		!Stem Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.20    0.00		!Root Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.10    0.00  0.00  !Litter Mass for 9 PFTs+Bare, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    1.00    0.00  0.00  !Soil C Mass for 9 PFTs+Bare, Kg C/m2
+       2       2       2       3       2       3       3       2       2		!Leaf Status (1,2,3 or 4). See Phenology.
+       0       0       0       0       0       0       0       0       0		!Days with +ve net photosynthesis. See Phenology.
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Min. LAI, for use with CTEM1 option only TILE=8 Cropland (Remember it's in october)
+    0.00    0.00    0.00    0.00    0.00    3.00    3.00    0.00    0.00		!Max. LAI, for use with CTEM1 option only
+    0.00    0.00    0.00    0.00    0.00    0.50    0.50    0.00    0.00		!Divide CLASS' 4 PFTs -> 9
+    0.00    0.00    0.00    0.00    0.00    0.08    0.08    0.00    0.00		!Green Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Brown Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.08    0.08    0.00    0.00		!Stem Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.03    0.03    0.00    0.00		!Root Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.05    0.05    0.00    0.00  0.00  !Litter Mass for 9 PFTs+Bare, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    3.00    3.00    0.00    0.00  0.00  !Soil C Mass for 9 PFTs+Bare, Kg C/m2
+       2       2       2       3       2       1       3       2       2		!Leaf Status (1,2,3 or 4). See Phenology.
+       0       0       0       0       0       5       0       0       0		!Days with +ve net photosynthesis. See Phenology.
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Min. LAI, for use with CTEM1 option only TILE=9 Barrenlands
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Max. LAI, for use with CTEM1 option only
+    1.00    0.00    0.00    1.00    0.00    1.00    0.00    1.00    0.00		!Divide CLASS' 4 PFTs -> 9
+    0.00    0.00    0.00    0.00    0.00    0.00    0.10    0.00    0.00		!Green Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.10    0.00    0.00		!Brown Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Stem Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Root Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00  0.00  !Litter Mass for 9 PFTs+Bare, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00  0.00  !Soil C Mass for 9 PFTs+Bare, Kg C/m2
+       2       2       2       3       2       3       3       2       2		!Leaf Status (1,2,3 or 4). See Phenology.
+       0       0       0       0       0       0       0       0       0		!Days with +ve net photosynthesis. See Phenology.
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Min. LAI, for use with CTEM1 option only TILE=10 Urban 
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Max. LAI, for use with CTEM1 option only
+    1.00    0.00    0.00    1.00    0.00    1.00    0.00    1.00    0.00		!Divide CLASS' 4 PFTs -> 9
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Green Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Brown Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Stem Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Root Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00  0.00  !Litter Mass for 9 PFTs+Bare, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00  0.00  !Soil C Mass for 9 PFTs+Bare, Kg C/m2
+       2       2       2       3       2       3       3       2       2		!Leaf Status (1,2,3 or 4). See Phenology.
+       0       0       0       0       0       0       0       0       0		!Days with +ve net photosynthesis. See Phenology.
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Min. LAI, for use with CTEM1 option only TILE=11 Water
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Max. LAI, for use with CTEM1 option only
+    1.00    0.00    0.00    1.00    0.00    1.00    0.00    1.00    0.00		!Divide CLASS' 4 PFTs -> 9
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Green Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Brown Leaf Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Stem Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00		!Root Mass for 9 PFTs, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00  0.00  !Litter Mass for 9 PFTs+Bare, Kg C/m2
+    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00  0.00  !Soil C Mass for 9 PFTs+Bare, Kg C/m2
+       2       2       2       3       2       3       3       2       2		!Leaf Status (1,2,3 or 4). See Phenology.
+       0       0       0       0       0       0       0       0       0		!Days with +ve net photosynthesis. See Phenology.
+   0.000   0.136   0.547   0.879  10.556   9.138		!Jan-June, Mean Monthly Lightning Freq, Flashes/km2.yr
+  26.200  13.365   4.227   0.316   0.233   0.000		!July-Dec, Mean Monthly Lightning Freq, Flashes/km2.yr
+   99.99		!Fire Extingushing Probability
+   99.99		!Probability of fire due to human causes
+       1		!Stand Alone Operation. 0 for GCM cell, 1 otherwise.
